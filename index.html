@@ -21,6 +21,46 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        // Particle class for creating particle effects
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = 2;
+                this.alpha = 1; // Transparency
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 2,
+                    y: (Math.random() - 0.5) * 2
+                };
+                this.gravity = 0.1;
+                this.friction = 0.98;
+                this.lifespan = 100; // Number of frames the particle will last
+            }
+
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.01; // Fades out the particle over time
+                this.lifespan--;
+            }
+
+            draw(offsetX, offsetY) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x - offsetX, this.y - offsetY, this.radius, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Entity base class for common properties
         class Entity {
             constructor(x, y, radius, speed, sprite) {
                 this.x = x;
@@ -36,6 +76,7 @@
             }
         }
 
+        // Player class extending Entity
         class Player extends Entity {
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
@@ -78,6 +119,7 @@
             }
         }
 
+        // Enemy class extending Entity
         class Enemy extends Entity {
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
@@ -100,6 +142,7 @@
             }
         }
 
+        // Bullet class extending Entity
         class Bullet extends Entity {
             constructor(x, y, radius, speed, sprite, angle) {
                 super(x, y, radius, speed, sprite);
@@ -112,6 +155,7 @@
             }
         }
 
+        // BackgroundTile class for drawing background tiles
         class BackgroundTile {
             constructor(x, y, size, color) {
                 this.x = x;
@@ -126,9 +170,11 @@
             }
         }
 
+        // Initialize game variables
         const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
         const enemies = [];
         const bullets = [];
+        const particles = [];
         const keys = {};
         const tileSize = 100;
         const tiles = new Map();
@@ -138,9 +184,11 @@
         const fpsHistory = [];
         let lastTimestamp = 0;
 
+        // Event listeners for keyboard input
         document.addEventListener('keydown', (e) => keys[e.key] = true);
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        // Game loop function
         function gameLoop(timestamp) {
             if (lastTimestamp) {
                 const delta = timestamp - lastTimestamp;
@@ -156,6 +204,7 @@
             requestAnimationFrame(gameLoop);
         }
 
+        // Update game state
         function update() {
             player.move(keys);
             player.shoot();
@@ -173,14 +222,18 @@
                     const distance = Math.sqrt((bullet.x - enemy.x) ** 2 + (bullet.y - enemy.y) ** 2);
                     if (distance < bullet.radius + enemy.radius) {
                         enemy.hp -= 1;
+                        createParticles(bullet.x, bullet.y, '#ff0000', 5); // Particle effect on bullet hit
                         bullets.splice(bulletIndex, 1);
                         if (enemy.hp <= 0) {
                             enemies.splice(index, 1);
+                            enemyDestroyedEffect(enemy);
                             score++;
                         }
                     }
                 });
             });
+
+            updateParticles();
 
             timeElapsed += 1 / 60;
             if (timeElapsed >= 10) {
@@ -193,6 +246,7 @@
             }
         }
 
+        // Draw game objects
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -202,6 +256,7 @@
             generateTiles(offsetX, offsetY);
 
             tiles.forEach(tile => tile.draw(offsetX, offsetY));
+            drawParticles(offsetX, offsetY);
             player.draw(offsetX, offsetY);
             bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
             enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
@@ -214,6 +269,7 @@
             ctx.fillText(`HP: ${player.hp}`, 10, 60);
         }
 
+        // Generate background tiles
         function generateTiles(offsetX, offsetY) {
             const startX = Math.floor(offsetX / tileSize) * tileSize;
             const startY = Math.floor(offsetY / tileSize) * tileSize;
@@ -231,6 +287,7 @@
             }
         }
 
+        // Spawn new enemy
         function spawnEnemy() {
             const side = Math.floor(Math.random() * 4);
             let x, y;
@@ -264,6 +321,34 @@
             enemies.push(new Enemy(x, y, type.radius, type.speed, type.sprite, type.hp));
         }
 
+        // Create particles for visual effects
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // Update particles position and lifespan
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.update();
+                if (particle.lifespan <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+
+        // Draw particles
+        function drawParticles(offsetX, offsetY) {
+            particles.forEach(particle => particle.draw(offsetX, offsetY));
+        }
+
+        // Particle effect for enemy destruction
+        function enemyDestroyedEffect(enemy) {
+            createParticles(enemy.x, enemy.y, '#ff0000', 20); // Red particles for explosion effect
+        }
+
+        // Start the game loop
         gameLoop();
     </script>
 </body>
