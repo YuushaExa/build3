@@ -34,7 +34,7 @@
     <div id="menu" class="menu">
         <h2>Choose an Option</h2>
         <button id="option1">Enhance Bullet Attack</button>
-        <button id="option2">Unlock M61 Vulcan</button>
+        <button id="option2">Enhance Vulcan Attack</button>
         <button id="option3">Enhance Max Health</button>
     </div>
     <script>
@@ -104,7 +104,15 @@
                 this.cooldown = 0;
                 this.score = 0;
                 this.bulletAttack = 1; // Initial bullet attack power
+                this.vulcanAttack = 1; // Initial Vulcan attack power
                 this.maxHealth = 10; // Initial maximum health
+                this.weapon = 'mecha'; // Initial weapon
+                this.upgrades = {
+                    'Enhance Bullet Attack': 0,
+                    'Enhance Vulcan Attack': 0,
+                    'Enhance Max Health': 0
+                };
+                this.milestones = [100, 300, 500, 1000];
             }
 
             move(keys) {
@@ -118,13 +126,13 @@
                 if (this.cooldown === 0) {
                     const closestEnemy = this.findClosestEnemy();
                     if (closestEnemy) {
-                        if (this.sprite.src.includes('mecha')) {
-                            const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                        const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                        if (this.weapon === 'mecha') {
                             bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
-                        } else if (this.sprite.src.includes('vulcan')) {
+                        } else if (this.weapon === 'vulcan') {
                             for (let i = 0; i < 6; i++) {
-                                const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x + (i - 3) * 5);
-                                bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
+                                const spreadAngle = angle + (i - 3) * 0.1; // Spread bullets
+                                bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
                             }
                         }
                     }
@@ -150,23 +158,25 @@
 
             addScore(points) {
                 this.score += points;
-                if (this.score >= 10) {
+                if (this.milestones.includes(this.score)) {
                     showMenu();
                 }
             }
 
             enhanceBulletAttack() {
                 this.bulletAttack++;
+                this.upgrades['Enhance Bullet Attack']++;
             }
 
-            unlockVulcan() {
-                this.sprite.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Vulcan1.jpg/797px-Vulcan1.jpg';
-                this.bulletAttack = 3;
+            enhanceVulcanAttack() {
+                this.vulcanAttack++;
+                this.upgrades['Enhance Vulcan Attack']++;
             }
 
             enhanceMaxHealth() {
                 this.maxHealth += 5;
                 this.hp += 5; // Increase current health as well
+                this.upgrades['Enhance Max Health']++;
             }
         }
 
@@ -248,7 +258,7 @@
                         player.enhanceBulletAttack();
                         break;
                     case 2:
-                        player.unlockVulcan();
+                        player.enhanceVulcanAttack();
                         break;
                     case 3:
                         player.enhanceMaxHealth();
@@ -261,18 +271,18 @@
         }
 
         // Initialize game variables
-        const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
-        const enemies = [];
-        const bullets = [];
-        const particles = [];
+        const player = new Player(canvas.width / 2, canvas.height / 2, 20, 5, 'https://opengameart.org/sites/default/files/spritesheet_4.png', 10);
         const keys = {};
-        const tileSize = 100;
+        const bullets = [];
+        const enemies = [];
+        const particles = [];
         const tiles = new Map();
-        let spawnRate = 0.005;
-        let timeElapsed = 0;
-        const fpsHistory = [];
-        let lastTimestamp = 0;
         const menu = new Menu();
+
+        let lastTimestamp = 0;
+        const fpsHistory = [];
+        let timeElapsed = 0;
+        let spawnRate = 0.01;
 
         // Event listeners for keyboard input
         document.addEventListener('keydown', (e) => keys[e.key] = true);
@@ -311,7 +321,11 @@
                 bullets.forEach((bullet, bulletIndex) => {
                     const distance = Math.sqrt((bullet.x - enemy.x) ** 2 + (bullet.y - enemy.y) ** 2);
                     if (distance < bullet.radius + enemy.radius) {
-                        enemy.hp -= player.bulletAttack;
+                        if (player.weapon === 'mecha') {
+                            enemy.hp -= player.bulletAttack;
+                        } else if (player.weapon === 'vulcan') {
+                            enemy.hp -= player.vulcanAttack;
+                        }
                         bullets.splice(bulletIndex, 1);
                         if (enemy.hp <= 0) {
                             enemies.splice(index, 1);
@@ -357,6 +371,14 @@
             ctx.fillText(`Score: ${player.score}`, 10, 20); // Display player score
             ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40); // Display FPS
             ctx.fillText(`HP: ${player.hp}`, 10, 60); // Display player health
+
+            // Display upgrades
+            ctx.fillText(`Upgrades:`, 10, 80);
+            let offsetY = 100;
+            for (const [upgrade, level] of Object.entries(player.upgrades)) {
+                ctx.fillText(`${upgrade}${level > 0 ? ' +' + level : ''}`, 10, offsetY);
+                offsetY += 20;
+            }
         }
 
         // Generate background tiles
@@ -402,9 +424,9 @@
             }
 
             const enemyTypes = [
-                { radius: 15, speed: 2, sprite: 'enemy1.png', hp: 3 },
-                { radius: 10, speed: 3, sprite: 'enemy2.png', hp: 2 },
-                { radius: 20, speed: 1.5, sprite: 'enemy3.png', hp: 5 }
+                { radius: 15, speed: 2, sprite: 'https://opengameart.org/sites/default/files/spritesheet_4.png', hp: 3 },
+                { radius: 10, speed: 3, sprite: 'https://opengameart.org/sites/default/files/spritesheet_4.png', hp: 2 },
+                { radius: 20, speed: 1.5, sprite: 'https://opengameart.org/sites/default/files/spritesheet_4.png', hp: 5 }
             ];
 
             const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
@@ -438,7 +460,7 @@
             createParticles(enemy.x, enemy.y, '#ff0000', 20); // Red particles for explosion effect
         }
 
-        // Show menu when player score reaches 10
+        // Show menu when player score reaches milestones
         function showMenu() {
             menu.show();
         }
