@@ -73,7 +73,7 @@ class Bullet extends Entity {
     }
 }
 
-let player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'https://opengameart.org/sites/default/files/bullet_8.png', 10);
+let player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
 let enemies = [];
 let bullets = [];
 let keys = {};
@@ -136,9 +136,9 @@ function spawnEnemy() {
     const y = Math.random() * canvas.height;
 
     const enemyTypes = [
-        { radius: 15, speed: 2, sprite: 'https://opengameart.org/sites/default/files/bullet_8.png', hp: 3 },
-        { radius: 10, speed: 3, sprite: 'https://opengameart.org/sites/default/files/bullet_8.png', hp: 2 },
-        { radius: 20, speed: 1.5, sprite: 'https://opengameart.org/sites/default/files/bullet_8.png', hp: 5 }
+        { radius: 15, speed: 2, sprite: 'enemy1.png', hp: 3 },
+        { radius: 10, speed: 3, sprite: 'enemy2.png', hp: 2 },
+        { radius: 20, speed: 1.5, sprite: 'enemy3.png', hp: 5 }
     ];
 
     const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
