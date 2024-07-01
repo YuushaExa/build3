@@ -374,10 +374,10 @@
 
             // Display upgrades
             ctx.fillText(`Upgrades:`, 10, 80);
-            let offsetY = 100;
+            let upgradeOffsetY = 100; // Unique variable name
             for (const [upgrade, level] of Object.entries(player.upgrades)) {
-                ctx.fillText(`${upgrade}${level > 0 ? ' +' + level : ''}`, 10, offsetY);
-                offsetY += 20;
+                ctx.fillText(`${upgrade}${level > 0 ? ' +' + level : ''}`, 10, upgradeOffsetY);
+                upgradeOffsetY += 20;
             }
         }
 
