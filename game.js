@@ -1,5 +1,3 @@
-// game.js
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -13,8 +11,8 @@ class Entity {
         this.sprite.src = sprite;
     }
 
-    draw() {
-        ctx.drawImage(this.sprite, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+    draw(offsetX, offsetY) {
+        ctx.drawImage(this.sprite, this.x - this.radius - offsetX, this.y - this.radius - offsetY, this.radius * 2, this.radius * 2);
     }
 }
 
@@ -26,18 +24,37 @@ class Player extends Entity {
     }
 
     move(keys) {
-        if (keys['ArrowUp'] && this.y - this.radius > 0) this.y -= this.speed;
-        if (keys['ArrowDown'] && this.y + this.radius < canvas.height) this.y += this.speed;
-        if (keys['ArrowLeft'] && this.x - this.radius > 0) this.x -= this.speed;
-        if (keys['ArrowRight'] && this.x + this.radius < canvas.width) this.x += this.speed;
+        if (keys['ArrowUp']) this.y -= this.speed;
+        if (keys['ArrowDown']) this.y += this.speed;
+        if (keys['ArrowLeft']) this.x -= this.speed;
+        if (keys['ArrowRight']) this.x += this.speed;
     }
 
     shoot() {
         if (this.cooldown === 0) {
-            bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png'));
+            const closestEnemy = this.findClosestEnemy();
+            if (closestEnemy) {
+                const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
+            }
             this.cooldown = 15;
         }
         if (this.cooldown > 0) this.cooldown--;
+    }
+
+    findClosestEnemy() {
+        let closest = null;
+        let minDist = Infinity;
+        enemies.forEach(enemy => {
+            const dx = enemy.x - this.x;
+            const dy = enemy.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minDist) {
+                closest = enemy;
+                minDist = dist;
+            }
+        });
+        return closest;
     }
 }
 
@@ -64,12 +81,14 @@ class Enemy extends Entity {
 }
 
 class Bullet extends Entity {
-    constructor(x, y, radius, speed, sprite) {
+    constructor(x, y, radius, speed, sprite, angle) {
         super(x, y, radius, speed, sprite);
+        this.angle = angle;
     }
 
     update() {
-        this.y -= this.speed;
+        this.x += this.speed * Math.cos(this.angle);
+        this.y += this.speed * Math.sin(this.angle);
     }
 }
 
@@ -78,11 +97,22 @@ let enemies = [];
 let bullets = [];
 let keys = {};
 let score = 0;
+let spawnRate = 0.005;
+let timeElapsed = 0;
 
 document.addEventListener('keydown', (e) => keys[e.key] = true);
 document.addEventListener('keyup', (e) => keys[e.key] = false);
 
-function gameLoop() {
+let lastTimestamp = 0;
+let fps = 0;
+
+function gameLoop(timestamp) {
+    if (lastTimestamp) {
+        const delta = timestamp - lastTimestamp;
+        fps = 1000 / delta;
+    }
+    lastTimestamp = timestamp;
+
     update();
     draw();
     requestAnimationFrame(gameLoop);
@@ -90,11 +120,14 @@ function gameLoop() {
 
 function update() {
     player.move(keys);
-    if (keys[' ']) player.shoot();
+    player.shoot();
 
     bullets.forEach((bullet, index) => {
         bullet.update();
-        if (bullet.y < 0) bullets.splice(index, 1);
+        // Remove bullets that are too far from the player
+        if (Math.abs(bullet.x - player.x) > canvas.width || Math.abs(bullet.y - player.y) > canvas.height) {
+            bullets.splice(index, 1);
+        }
     });
 
     enemies.forEach((enemy, index) => {
@@ -113,7 +146,13 @@ function update() {
         });
     });
 
-    if (Math.random() < 0.02) {
+    timeElapsed += 1 / 60;
+    if (timeElapsed >= 10) {
+        timeElapsed = 0;
+        spawnRate += 0.001;
+    }
+
+    if (Math.random() < spawnRate) {
         spawnEnemy();
     }
 }
@@ -121,19 +160,42 @@ function update() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    player.draw();
-    bullets.forEach(bullet => bullet.draw());
-    enemies.forEach(enemy => enemy.draw());
+    const offsetX = player.x - canvas.width / 2;
+    const offsetY = player.y - canvas.height / 2;
+
+    player.draw(offsetX, offsetY);
+    bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
+    enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
 
     ctx.font = '20px Arial';
     ctx.fillStyle = 'black';
     ctx.fillText(`Score: ${score}`, 10, 20);
-    ctx.fillText(`HP: ${player.hp}`, 10, 40);
+    ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40);
+    ctx.fillText(`HP: ${player.hp}`, 10, 60);
 }
 
 function spawnEnemy() {
-    const x = Math.random() < 0.5 ? 0 : canvas.width;
-    const y = Math.random() * canvas.height;
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
+
+    switch (side) {
+        case 0: // Left
+            x = player.x - canvas.width / 2 - 50;
+            y = player.y + (Math.random() - 0.5) * canvas.height;
+            break;
+        case 1: // Right
+            x = player.x + canvas.width / 2 + 50;
+            y = player.y + (Math.random() - 0.5) * canvas.height;
+            break;
+        case 2: // Top
+            x = player.x + (Math.random() - 0.5) * canvas.width;
+            y = player.y - canvas.height / 2 - 50;
+            break;
+        case 3: // Bottom
+            x = player.x + (Math.random() - 0.5) * canvas.width;
+            y = player.y + canvas.height / 2 + 50;
+            break;
+    }
 
     const enemyTypes = [
         { radius: 15, speed: 2, sprite: 'enemy1.png', hp: 3 },
