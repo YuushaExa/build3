@@ -126,38 +126,28 @@
             }
         }
 
-        function generateBackground(gridSize, tileSize) {
-            const tiles = [];
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    const x = i * tileSize;
-                    const y = j * tileSize;
-                    const color = (i + j) % 2 === 0 ? '#a0a0a0' : '#909090';
-                    tiles.push(new BackgroundTile(x, y, tileSize, color));
-                }
-            }
-            return tiles;
-        }
-
         const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
         const enemies = [];
         const bullets = [];
         const keys = {};
-        const backgroundTiles = generateBackground(100, 100);
+        const tileSize = 100;
+        const tiles = new Map();
         let score = 0;
         let spawnRate = 0.005;
         let timeElapsed = 0;
+        const fpsHistory = [];
+        let lastTimestamp = 0;
 
         document.addEventListener('keydown', (e) => keys[e.key] = true);
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
-        let lastTimestamp = 0;
-        let fps = 0;
-
         function gameLoop(timestamp) {
             if (lastTimestamp) {
                 const delta = timestamp - lastTimestamp;
-                fps = 1000 / delta;
+                fpsHistory.push(1000 / delta);
+                if (fpsHistory.length > 60) {
+                    fpsHistory.shift();
+                }
             }
             lastTimestamp = timestamp;
 
@@ -195,7 +185,7 @@
             timeElapsed += 1 / 60;
             if (timeElapsed >= 10) {
                 timeElapsed = 0;
-                spawnRate += 0.1;
+                spawnRate += 0.001;
             }
 
             if (Math.random() < spawnRate) {
@@ -209,16 +199,36 @@
             const offsetX = player.x - canvas.width / 2;
             const offsetY = player.y - canvas.height / 2;
 
-            backgroundTiles.forEach(tile => tile.draw(offsetX, offsetY));
+            generateTiles(offsetX, offsetY);
+
+            tiles.forEach(tile => tile.draw(offsetX, offsetY));
             player.draw(offsetX, offsetY);
             bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
             enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
 
+            const fps = fpsHistory.length ? fpsHistory.reduce((a, b) => a + b) / fpsHistory.length : 0;
             ctx.font = '20px Arial';
             ctx.fillStyle = 'black';
             ctx.fillText(`Score: ${score}`, 10, 20);
             ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40);
             ctx.fillText(`HP: ${player.hp}`, 10, 60);
+        }
+
+        function generateTiles(offsetX, offsetY) {
+            const startX = Math.floor(offsetX / tileSize) * tileSize;
+            const startY = Math.floor(offsetY / tileSize) * tileSize;
+            const endX = startX + canvas.width + tileSize;
+            const endY = startY + canvas.height + tileSize;
+
+            for (let x = startX; x <= endX; x += tileSize) {
+                for (let y = startY; y <= endY; y += tileSize) {
+                    const key = `${x},${y}`;
+                    if (!tiles.has(key)) {
+                        const color = (Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0 ? '#a0a0a0' : '#909090';
+                        tiles.set(key, new BackgroundTile(x, y, tileSize, color));
+                    }
+                }
+            }
         }
 
         function spawnEnemy() {
@@ -258,4 +268,3 @@
     </script>
 </body>
 </html>
-
