@@ -34,7 +34,7 @@
     <div id="menu" class="menu">
         <h2>Choose an Option</h2>
         <button id="option1">Enhance Bullet Attack</button>
-        <button id="option2">Unlock M61 Vulcan</button>
+        <button id="option2">Enhance Vulcan Attack</button>
         <button id="option3">Enhance Max Health</button>
     </div>
     <script>
@@ -107,9 +107,15 @@
                 this.vulcanFireDuration = 0;
                 this.score = 0;
                 this.bulletAttack = 1; // Initial bullet attack power
+                this.vulcanAttack = 1; // Initial Vulcan attack power
                 this.maxHealth = 10; // Initial maximum health
                 this.weaponSprite = null;
                 this.hasVulcan = false; // Indicator if Vulcan is unlocked
+                this.upgradeHistory = {
+                    bullet: 0,
+                    vulcan: 0,
+                    health: 0
+                };
             }
 
             move(keys) {
@@ -175,13 +181,19 @@
 
             addScore(points) {
                 this.score += points;
-                if (this.score >= 10) {
+                if ([100, 300, 500, 1000].includes(this.score)) {
                     showMenu();
                 }
             }
 
             enhanceBulletAttack() {
                 this.bulletAttack++;
+                this.upgradeHistory.bullet++;
+            }
+
+            enhanceVulcanAttack() {
+                this.vulcanAttack++;
+                this.upgradeHistory.vulcan++;
             }
 
             unlockVulcan() {
@@ -194,6 +206,7 @@
             enhanceMaxHealth() {
                 this.maxHealth += 5;
                 this.hp += 5; // Increase current health as well
+                this.upgradeHistory.health++;
             }
 
             startVulcanFire() {
@@ -276,7 +289,7 @@
                 });
 
                 this.option2.addEventListener('click', () => {
-                    player.unlockVulcan();
+                    player.enhanceVulcanAttack();
                     this.hide();
                 });
 
@@ -288,10 +301,20 @@
 
             show() {
                 this.menuElement.classList.add('active');
+                this.pauseGame();
             }
 
             hide() {
                 this.menuElement.classList.remove('active');
+                this.resumeGame();
+            }
+
+            pauseGame() {
+                this.paused = true;
+            }
+
+            resumeGame() {
+                this.paused = false;
             }
         }
 
@@ -319,6 +342,11 @@
 
         // Game loop function
         function gameLoop(timestamp) {
+            if (menu.paused) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
             if (lastTimestamp) {
                 const delta = timestamp - lastTimestamp;
                 fpsHistory.push(1000 / delta);
@@ -396,6 +424,13 @@
             ctx.fillText(`Score: ${player.score}`, 10, 20); // Display player score
             ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40); // Display FPS
             ctx.fillText(`HP: ${player.hp}`, 10, 60); // Display player health
+
+            // Display upgrades
+            ctx.fillText(`Bullet Attack: ${player.bulletAttack} ${player.upgradeHistory.bullet > 0 ? `(+${player.upgradeHistory.bullet})` : ''}`, 10, 80);
+            if (player.hasVulcan) {
+                ctx.fillText(`Vulcan Attack: ${player.vulcanAttack} ${player.upgradeHistory.vulcan > 0 ? `(+${player.upgradeHistory.vulcan})` : ''}`, 10, 100);
+            }
+            ctx.fillText(`Max Health: ${player.maxHealth} ${player.upgradeHistory.health > 0 ? `(+${player.upgradeHistory.health * 5})` : ''}`, 10, 120);
         }
 
         // Generate background tiles
@@ -477,7 +512,7 @@
             createParticles(enemy.x, enemy.y, '#ff0000', 20); // Red particles for explosion effect
         }
 
-        // Show menu when player score reaches 10
+        // Show menu when player score reaches specific milestones
         function showMenu() {
             menu.show();
         }
