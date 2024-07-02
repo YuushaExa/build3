@@ -34,28 +34,27 @@
     <div id="menu" class="menu">
         <h2>Choose an Option</h2>
         <button id="option1">Enhance Bullet Attack</button>
-        <button id="option2">Enhance Vulcan Attack</button>
+        <button id="option2">Unlock M61 Vulcan</button>
         <button id="option3">Enhance Max Health</button>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Particle class for creating particle effects
         class Particle {
             constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
                 this.radius = 2;
-                this.alpha = 1; // Transparency
+                this.alpha = 1;
                 this.velocity = {
                     x: (Math.random() - 0.5) * 2,
                     y: (Math.random() - 0.5) * 2
                 };
                 this.gravity = 0.1;
                 this.friction = 0.98;
-                this.lifespan = 100; // Number of frames the particle will last
+                this.lifespan = 100;
             }
 
             update() {
@@ -64,7 +63,7 @@
                 this.velocity.y += this.gravity;
                 this.x += this.velocity.x;
                 this.y += this.velocity.y;
-                this.alpha -= 0.01; // Fades out the particle over time
+                this.alpha -= 0.01;
                 this.lifespan--;
             }
 
@@ -80,7 +79,6 @@
             }
         }
 
-        // Entity base class for common properties
         class Entity {
             constructor(x, y, radius, speed, sprite) {
                 this.x = x;
@@ -96,7 +94,6 @@
             }
         }
 
-        // Player class extending Entity
         class Player extends Entity {
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
@@ -106,11 +103,11 @@
                 this.vulcanFiring = false;
                 this.vulcanFireDuration = 0;
                 this.score = 0;
-                this.bulletAttack = 1; // Initial bullet attack power
-                this.vulcanAttack = 1; // Initial Vulcan attack power
-                this.maxHealth = 10; // Initial maximum health
+                this.bulletAttack = 1;
+                this.vulcanAttack = 1;
+                this.maxHealth = 10;
                 this.weaponSprite = null;
-                this.hasVulcan = false; // Indicator if Vulcan is unlocked
+                this.hasVulcan = false;
                 this.upgradeHistory = {
                     bullet: 0,
                     vulcan: 0,
@@ -158,7 +155,7 @@
                 if (closestEnemy) {
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
                     for (let i = 0; i < 6; i++) {
-                        const spreadAngle = angle + (i - 3) * 0.1; // Spread bullets
+                        const spreadAngle = angle + (i - 3) * 0.1;
                         bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
                     }
                 }
@@ -199,13 +196,12 @@
             unlockVulcan() {
                 this.weaponSprite = new Image();
                 this.weaponSprite.src = 'vulcan.png';
-                this.bulletAttack = 2;
                 this.hasVulcan = true;
             }
 
             enhanceMaxHealth() {
                 this.maxHealth += 5;
-                this.hp += 5; // Increase current health as well
+                this.hp += 5;
                 this.upgradeHistory.health++;
             }
 
@@ -224,7 +220,6 @@
             }
         }
 
-        // Enemy class extending Entity
         class Enemy extends Entity {
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
@@ -247,7 +242,6 @@
             }
         }
 
-        // Bullet class extending Entity
         class Bullet extends Entity {
             constructor(x, y, radius, speed, sprite, angle) {
                 super(x, y, radius, speed, sprite);
@@ -260,7 +254,6 @@
             }
         }
 
-        // BackgroundTile class for drawing background tiles
         class BackgroundTile {
             constructor(x, y, size, color) {
                 this.x = x;
@@ -275,7 +268,6 @@
             }
         }
 
-        // Menu class for handling the upgrade menu
         class Menu {
             constructor() {
                 this.menuElement = document.getElementById('menu');
@@ -289,7 +281,7 @@
                 });
 
                 this.option2.addEventListener('click', () => {
-                    player.enhanceVulcanAttack();
+                    player.unlockVulcan();
                     this.hide();
                 });
 
@@ -331,7 +323,6 @@
         let lastTimestamp = 0;
         const menu = new Menu();
 
-        // Event listeners for keyboard input
         document.addEventListener('keydown', (e) => {
             keys[e.key] = true;
             if (e.key === ' ') {
@@ -340,7 +331,6 @@
         });
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
-        // Game loop function
         function gameLoop(timestamp) {
             if (menu.paused) {
                 requestAnimationFrame(gameLoop);
@@ -361,7 +351,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Update game state
         function update() {
             player.move(keys);
             player.shoot();
@@ -389,7 +378,7 @@
                 });
             });
 
-            updateParticles(); // Update particle positions and lifespan
+            updateParticles();
 
             timeElapsed += 1 / 60;
             if (timeElapsed >= 10) {
@@ -402,30 +391,27 @@
             }
         }
 
-        // Render game objects
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const offsetX = player.x - canvas.width / 2;
             const offsetY = player.y - canvas.height / 2;
 
-            generateTiles(offsetX, offsetY); // Draw background tiles
+            generateTiles(offsetX, offsetY);
 
             tiles.forEach(tile => tile.draw(offsetX, offsetY));
-            player.draw(offsetX, offsetY); // Draw player
-            bullets.forEach(bullet => bullet.draw(offsetX, offsetY)); // Draw bullets
-            enemies.forEach(enemy => enemy.draw(offsetX, offsetY)); // Draw enemies
-            drawParticles(offsetX, offsetY); // Draw particles
+            player.draw(offsetX, offsetY);
+            bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
+            enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
+            drawParticles(offsetX, offsetY);
 
-            // Display game information
             const fps = fpsHistory.length ? fpsHistory.reduce((a, b) => a + b) / fpsHistory.length : 0;
             ctx.font = '20px Arial';
             ctx.fillStyle = 'black';
-            ctx.fillText(`Score: ${player.score}`, 10, 20); // Display player score
-            ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40); // Display FPS
-            ctx.fillText(`HP: ${player.hp}`, 10, 60); // Display player health
+            ctx.fillText(`Score: ${player.score}`, 10, 20);
+            ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40);
+            ctx.fillText(`HP: ${player.hp}`, 10, 60);
 
-            // Display upgrades
             ctx.fillText(`Bullet Attack: ${player.bulletAttack} ${player.upgradeHistory.bullet > 0 ? `(+${player.upgradeHistory.bullet})` : ''}`, 10, 80);
             if (player.hasVulcan) {
                 ctx.fillText(`Vulcan Attack: ${player.vulcanAttack} ${player.upgradeHistory.vulcan > 0 ? `(+${player.upgradeHistory.vulcan})` : ''}`, 10, 100);
@@ -433,7 +419,6 @@
             ctx.fillText(`Max Health: ${player.maxHealth} ${player.upgradeHistory.health > 0 ? `(+${player.upgradeHistory.health * 5})` : ''}`, 10, 120);
         }
 
-        // Generate background tiles
         function generateTiles(offsetX, offsetY) {
             const startX = Math.floor(offsetX / tileSize) * tileSize;
             const startY = Math.floor(offsetY / tileSize) * tileSize;
@@ -451,25 +436,24 @@
             }
         }
 
-        // Spawn new enemy
         function spawnEnemy() {
             const side = Math.floor(Math.random() * 4);
             let x, y;
 
             switch (side) {
-                case 0: // Left
+                case 0:
                     x = player.x - canvas.width / 2 - 50;
                     y = player.y + (Math.random() - 0.5) * canvas.height;
                     break;
-                case 1: // Right
+                case 1:
                     x = player.x + canvas.width / 2 + 50;
                     y = player.y + (Math.random() - 0.5) * canvas.height;
                     break;
-                case 2: // Top
+                case 2:
                     x = player.x + (Math.random() - 0.5) * canvas.width;
                     y = player.y - canvas.height / 2 - 50;
                     break;
-                case 3: // Bottom
+                case 3:
                     x = player.x + (Math.random() - 0.5) * canvas.width;
                     y = player.y + canvas.height / 2 + 50;
                     break;
@@ -485,14 +469,12 @@
             enemies.push(new Enemy(x, y, type.radius, type.speed, type.sprite, type.hp));
         }
 
-        // Create particles for visual effects
         function createParticles(x, y, color, count) {
             for (let i = 0; i < count; i++) {
                 particles.push(new Particle(x, y, color));
             }
         }
 
-        // Update particles position and lifespan
         function updateParticles() {
             particles.forEach((particle, index) => {
                 particle.update();
@@ -502,22 +484,18 @@
             });
         }
 
-        // Draw particles
         function drawParticles(offsetX, offsetY) {
             particles.forEach(particle => particle.draw(offsetX, offsetY));
         }
 
-        // Particle effect for enemy destruction
         function enemyDestroyedEffect(enemy) {
-            createParticles(enemy.x, enemy.y, '#ff0000', 20); // Red particles for explosion effect
+            createParticles(enemy.x, enemy.y, '#ff0000', 20);
         }
 
-        // Show menu when player score reaches specific milestones
         function showMenu() {
             menu.show();
         }
 
-        // Start the game loop
         gameLoop();
     </script>
 </body>
