@@ -101,12 +101,15 @@
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
                 this.hp = hp;
-                this.cooldown = 0;
+                this.basicCooldown = 0;
+                this.vulcanCooldown = 0;
+                this.vulcanFiring = false;
+                this.vulcanFireDuration = 0;
                 this.score = 0;
                 this.bulletAttack = 1; // Initial bullet attack power
                 this.maxHealth = 10; // Initial maximum health
-                this.weapon = 'basic'; // Initial weapon
                 this.weaponSprite = null;
+                this.hasVulcan = false; // Indicator if Vulcan is unlocked
             }
 
             move(keys) {
@@ -117,22 +120,42 @@
             }
 
             shoot() {
-                if (this.cooldown === 0) {
-                    const closestEnemy = this.findClosestEnemy();
-                    if (closestEnemy) {
-                        const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                        if (this.weapon === 'basic') {
-                            bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
-                        } else if (this.weapon === 'vulcan') {
-                            for (let i = 0; i < 6; i++) {
-                                const spreadAngle = angle + (i - 3) * 0.1; // Spread bullets
-                                bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
-                            }
-                        }
-                    }
-                    this.cooldown = 15;
+                if (this.basicCooldown === 0) {
+                    this.shootBasic();
+                    this.basicCooldown = 15;
                 }
-                if (this.cooldown > 0) this.cooldown--;
+
+                if (this.vulcanFiring) {
+                    if (this.vulcanFireDuration > 0) {
+                        this.shootVulcan();
+                        this.vulcanFireDuration -= 1 / 60;
+                    } else {
+                        this.vulcanFiring = false;
+                        this.vulcanCooldown = 10;
+                    }
+                }
+
+                if (this.basicCooldown > 0) this.basicCooldown--;
+                if (this.vulcanCooldown > 0) this.vulcanCooldown -= 1 / 60;
+            }
+
+            shootBasic() {
+                const closestEnemy = this.findClosestEnemy();
+                if (closestEnemy) {
+                    const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
+                }
+            }
+
+            shootVulcan() {
+                const closestEnemy = this.findClosestEnemy();
+                if (closestEnemy) {
+                    const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                    for (let i = 0; i < 6; i++) {
+                        const spreadAngle = angle + (i - 3) * 0.1; // Spread bullets
+                        bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
+                    }
+                }
             }
 
             findClosestEnemy() {
@@ -165,12 +188,19 @@
                 this.weaponSprite = new Image();
                 this.weaponSprite.src = 'vulcan.png';
                 this.bulletAttack = 2;
-                this.weapon = 'vulcan';
+                this.hasVulcan = true;
             }
 
             enhanceMaxHealth() {
                 this.maxHealth += 5;
                 this.hp += 5; // Increase current health as well
+            }
+
+            startVulcanFire() {
+                if (this.hasVulcan && !this.vulcanFiring && this.vulcanCooldown <= 0) {
+                    this.vulcanFiring = true;
+                    this.vulcanFireDuration = 3;
+                }
             }
 
             draw(offsetX, offsetY) {
@@ -232,17 +262,28 @@
             }
         }
 
-        // Menu class for handling menu functionality
+        // Menu class for handling the upgrade menu
         class Menu {
             constructor() {
                 this.menuElement = document.getElementById('menu');
-                this.option1Btn = document.getElementById('option1');
-                this.option2Btn = document.getElementById('option2');
-                this.option3Btn = document.getElementById('option3');
+                this.option1 = document.getElementById('option1');
+                this.option2 = document.getElementById('option2');
+                this.option3 = document.getElementById('option3');
 
-                this.option1Btn.addEventListener('click', () => this.activateOption(1));
-                this.option2Btn.addEventListener('click', () => this.activateOption(2));
-                this.option3Btn.addEventListener('click', () => this.activateOption(3));
+                this.option1.addEventListener('click', () => {
+                    player.enhanceBulletAttack();
+                    this.hide();
+                });
+
+                this.option2.addEventListener('click', () => {
+                    player.unlockVulcan();
+                    this.hide();
+                });
+
+                this.option3.addEventListener('click', () => {
+                    player.enhanceMaxHealth();
+                    this.hide();
+                });
             }
 
             show() {
@@ -252,26 +293,8 @@
             hide() {
                 this.menuElement.classList.remove('active');
             }
-
-            activateOption(option) {
-                switch (option) {
-                    case 1:
-                        player.enhanceBulletAttack();
-                        break;
-                    case 2:
-                        player.unlockVulcan();
-                        break;
-                    case 3:
-                        player.enhanceMaxHealth();
-                        break;
-                    default:
-                        break;
-                }
-                this.hide();
-            }
         }
 
-        // Initialize game variables
         const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
         const enemies = [];
         const bullets = [];
@@ -286,7 +309,12 @@
         const menu = new Menu();
 
         // Event listeners for keyboard input
-        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                player.startVulcanFire();
+            }
+        });
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
         // Game loop function
