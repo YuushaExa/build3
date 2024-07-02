@@ -105,7 +105,8 @@
                 this.score = 0;
                 this.bulletAttack = 1; // Initial bullet attack power
                 this.maxHealth = 10; // Initial maximum health
-                this.weapon = 'mecha'; // Initial weapon
+                this.weapon = 'basic'; // Initial weapon
+                this.weaponSprite = null;
             }
 
             move(keys) {
@@ -120,7 +121,7 @@
                     const closestEnemy = this.findClosestEnemy();
                     if (closestEnemy) {
                         const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                        if (this.weapon === 'mecha') {
+                        if (this.weapon === 'basic') {
                             bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
                         } else if (this.weapon === 'vulcan') {
                             for (let i = 0; i < 6; i++) {
@@ -161,7 +162,8 @@
             }
 
             unlockVulcan() {
-                this.sprite.src = 'vulcan.png';
+                this.weaponSprite = new Image();
+                this.weaponSprite.src = 'vulcan.png';
                 this.bulletAttack = 2;
                 this.weapon = 'vulcan';
             }
@@ -169,6 +171,13 @@
             enhanceMaxHealth() {
                 this.maxHealth += 5;
                 this.hp += 5; // Increase current health as well
+            }
+
+            draw(offsetX, offsetY) {
+                super.draw(offsetX, offsetY);
+                if (this.weaponSprite) {
+                    ctx.drawImage(this.weaponSprite, this.x - this.radius - offsetX - 20, this.y - this.radius - offsetY - 20, this.radius * 2 + 40, this.radius * 2 + 40);
+                }
             }
         }
 
