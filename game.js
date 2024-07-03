@@ -21,7 +21,8 @@ const player = {
 player.inventory[0] = "Gun"; // Adding a basic weapon (Gun) to the inventory
 
 const enemies = [];
-const enemySpeed = 2;
+const enemySpeed = 1.5;
+const enemyMaxSpeed = 2.5;
 let score = 0;
 let offsetX = 0;
 let offsetY = 0;
@@ -53,17 +54,20 @@ function updatePlayerPosition() {
 
 function moveEnemies() {
     enemies.forEach(enemy => {
-        if (enemy.x < player.x + offsetX) {
-            enemy.x += enemySpeed;
-        } else {
-            enemy.x -= enemySpeed;
-        }
+        const angle = Math.atan2(player.y + offsetY - enemy.y, player.x + offsetX - enemy.x);
+        const speed = Math.min(enemyMaxSpeed, enemySpeed + score * 0.01);
+        
+        enemy.x += Math.cos(angle) * speed;
+        enemy.y += Math.sin(angle) * speed;
 
-        if (enemy.y < player.y + offsetY) {
-            enemy.y += enemySpeed;
-        } else {
-            enemy.y -= enemySpeed;
-        }
+        // Avoid overlapping with other enemies
+        enemies.forEach(otherEnemy => {
+            if (enemy !== otherEnemy && isColliding(enemy, otherEnemy)) {
+                const angleBetween = Math.atan2(otherEnemy.y - enemy.y, otherEnemy.x - enemy.x);
+                enemy.x -= Math.cos(angleBetween) * speed;
+                enemy.y -= Math.sin(angleBetween) * speed;
+            }
+        });
     });
 }
 
@@ -76,14 +80,18 @@ function spawnEnemy() {
 
 function checkCollisions() {
     enemies.forEach((enemy, index) => {
-        if (player.x < enemy.x - offsetX + enemy.size &&
-            player.x + player.size > enemy.x - offsetX &&
-            player.y < enemy.y - offsetY + enemy.size &&
-            player.y + player.size > enemy.y - offsetY) {
+        if (isColliding(player, enemy)) {
             enemies.splice(index, 1);
             score++;
         }
     });
+}
+
+function isColliding(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.size &&
+           rect1.x + rect1.size > rect2.x &&
+           rect1.y < rect2.y + rect2.size &&
+           rect1.y + rect1.size > rect2.y;
 }
 
 function drawScore() {
@@ -111,6 +119,33 @@ function generateTiles() {
     }
 }
 
+function findClosestEnemy() {
+    let closestEnemy = null;
+    let closestDistance = Infinity;
+
+    enemies.forEach(enemy => {
+        const distance = Math.hypot(enemy.x - (player.x + offsetX), enemy.y - (player.y + offsetY));
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestEnemy = enemy;
+        }
+    });
+
+    return closestEnemy;
+}
+
+function shootClosestEnemy() {
+    const closestEnemy = findClosestEnemy();
+    if (closestEnemy && player.inventory[0] === "Gun") {
+        // Simple shooting mechanic: remove closest enemy
+        const index = enemies.indexOf(closestEnemy);
+        if (index !== -1) {
+            enemies.splice(index, 1);
+            score++;
+        }
+    }
+}
+
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -126,6 +161,9 @@ function update() {
 
     requestAnimationFrame(update);
 }
+
+// Shoot at the closest enemy every 1 second
+setInterval(shootClosestEnemy, 1000);
 
 function keyDown(e) {
     if (e.key === 'ArrowRight' || e.key === 'd') {
