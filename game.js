@@ -12,14 +12,49 @@ const characters = {
     mecha: {
         speed: 5,
         hp: 100,
-        attack: 10,
-        inventory: ["Gun"]
+        weapon: "Gun"
     },
     cyborg: {
         speed: 5,
         hp: 100,
+        weapon: "Shotgun"
+    }
+};
+
+const weapons = {
+    Gun: {
+        attack: 10,
+        shoot: function (playerX, playerY, angle) {
+            const speed = 5;
+            bullets.push({
+                x: playerX,
+                y: playerY,
+                size: 5,
+                dx: Math.cos(angle) * speed,
+                dy: Math.sin(angle) * speed,
+                attack: this.attack,
+                penetrate: 0
+            });
+        }
+    },
+    Shotgun: {
         attack: 15,
-        inventory: ["Shotgun"]
+        shoot: function (playerX, playerY, angle) {
+            const spreadAngle = 0.1;
+            for (let i = -1; i <= 1; i += 2) {
+                const bulletAngle = angle + i * spreadAngle;
+                const speed = 5;
+                bullets.push({
+                    x: playerX,
+                    y: playerY,
+                    size: 5,
+                    dx: Math.cos(bulletAngle) * speed,
+                    dy: Math.sin(bulletAngle) * speed,
+                    attack: this.attack,
+                    penetrate: 2
+                });
+            }
+        }
     }
 };
 
@@ -31,13 +66,14 @@ let player = {
     dx: 0,
     dy: 0,
     hp: 0,
-    attack: 0,
-    inventory: []
+    weapon: null,
+    exp: 0
 };
 
 const enemies = [];
 const bullets = [];
 const explosions = [];
+const expPoints = [];
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
@@ -48,9 +84,6 @@ let gameStarted = false;
 function drawPlayer() {
     ctx.fillStyle = 'blue';
     ctx.fillRect(player.x, player.y, player.size, player.size);
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.fillText(`HP: ${player.hp}`, player.x - 10, player.y - 10);
 }
 
 function drawEnemies() {
@@ -63,9 +96,6 @@ function drawEnemies() {
         } else {
             ctx.fillStyle = 'red';
             ctx.fillRect(enemy.x - offsetX, enemy.y - offsetY, enemy.size, enemy.size);
-            ctx.fillStyle = 'white';
-            ctx.font = '12px Arial';
-            ctx.fillText(`HP: ${enemy.hp}`, enemy.x - offsetX, enemy.y - offsetY - 10);
         }
     });
 }
@@ -83,6 +113,13 @@ function drawExplosions() {
         ctx.beginPath();
         ctx.arc(explosion.x - offsetX, explosion.y - offsetY, explosion.radius, 0, Math.PI * 2);
         ctx.fill();
+    });
+}
+
+function drawExpPoints() {
+    ctx.fillStyle = 'blue';
+    expPoints.forEach(exp => {
+        ctx.fillRect(exp.x - offsetX, exp.y - offsetY, exp.size, exp.size);
     });
 }
 
@@ -173,6 +210,7 @@ function checkCollisions() {
                 if (enemy.hp <= 0 && !enemy.vanishing) {
                     startVanishing(enemy);
                     score++;
+                    expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
                 }
             }
         });
@@ -180,6 +218,13 @@ function checkCollisions() {
         if (!enemy.vanishing && isColliding(player, enemy)) {
             player.hp -= 10;
             startVanishing(enemy);
+        }
+    });
+
+    expPoints.forEach((exp, expIndex) => {
+        if (isColliding(player, exp)) {
+            player.exp++;
+            expPoints.splice(expIndex, 1);
         }
     });
 }
@@ -197,12 +242,16 @@ function drawScore() {
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
-function drawInventory() {
-    ctx.fillStyle = 'gray';
-    ctx.font = '16px Arial';
-    for (let i = 0; i < player.inventory.length; i++) {
-        ctx.fillText(`Slot ${i+1}: ${player.inventory[i] || 'Empty'}`, 10, 60 + i * 20);
-    }
+function drawExp() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`EXP: ${player.exp}`, 10, 60);
+}
+
+function drawHP() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`HP: ${player.hp}`, 10, 90);
 }
 
 function generateTiles() {
@@ -235,33 +284,7 @@ function shootClosestEnemy() {
     const closestEnemy = findClosestEnemy();
     if (closestEnemy) {
         const angle = Math.atan2(closestEnemy.y - (player.y + offsetY), closestEnemy.x - (player.x + offsetX));
-        if (player.inventory[0] === "Gun") {
-            const speed = 5;
-            bullets.push({
-                x: player.x + offsetX,
-                y: player.y + offsetY,
-                size: 5,
-                dx: Math.cos(angle) * speed,
-                dy: Math.sin(angle) * speed,
-                attack: player.attack,
-                penetrate: 0
-            });
-        } else if (player.inventory[0] === "Shotgun") {
-            const spreadAngle = 0.1;
-            for (let i = -1; i <= 1; i += 2) {
-                const bulletAngle = angle + i * spreadAngle;
-                const speed = 5;
-                bullets.push({
-                    x: player.x + offsetX,
-                    y: player.y + offsetY,
-                    size: 5,
-                    dx: Math.cos(bulletAngle) * speed,
-                    dy: Math.sin(bulletAngle) * speed,
-                    attack: player.attack,
-                    penetrate: 2
-                });
-            }
-        }
+        weapons[player.weapon].shoot(player.x + offsetX, player.y + offsetY, angle);
     }
 }
 
@@ -295,8 +318,10 @@ function update() {
     drawEnemies();
     drawBullets();
     drawExplosions();
+    drawExpPoints();
     drawScore();
-    drawInventory();
+    drawExp();
+    drawHP();
 
     updatePlayerPosition();
     moveEnemies();
@@ -343,8 +368,7 @@ document.getElementById('startButton').addEventListener('click', () => {
 
     player.speed = characterData.speed;
     player.hp = characterData.hp;
-    player.attack = characterData.attack;
-    player.inventory = [...characterData.inventory];
+    player.weapon = characterData.weapon;
 
     gameStarted = true;
     document.getElementById('menu').style.display = 'none';
