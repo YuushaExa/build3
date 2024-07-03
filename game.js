@@ -15,6 +15,8 @@ const player = {
     speed: 5,
     dx: 0,
     dy: 0,
+    hp: 100,
+    attack: 10,
     inventory: new Array(6).fill(null)
 };
 
@@ -32,12 +34,22 @@ let offsetY = 0;
 function drawPlayer() {
     ctx.fillStyle = 'blue';
     ctx.fillRect(player.x, player.y, player.size, player.size);
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.fillText(`HP: ${player.hp}`, player.x - 10, player.y - 10);
 }
 
 function drawEnemies() {
-    ctx.fillStyle = 'red';
     enemies.forEach(enemy => {
+        if (enemy.vanishing) {
+            ctx.fillStyle = `rgba(255, 0, 0, ${enemy.alpha})`;
+        } else {
+            ctx.fillStyle = 'red';
+        }
         ctx.fillRect(enemy.x - offsetX, enemy.y - offsetY, enemy.size, enemy.size);
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.fillText(`HP: ${enemy.hp}`, enemy.x - offsetX, enemy.y - offsetY - 10);
     });
 }
 
@@ -72,20 +84,22 @@ function updatePlayerPosition() {
 
 function moveEnemies() {
     enemies.forEach(enemy => {
-        const angle = Math.atan2(player.y + offsetY - enemy.y, player.x + offsetX - enemy.x);
-        const speed = Math.min(enemyMaxSpeed, enemySpeed + score * 0.01);
-        
-        enemy.x += Math.cos(angle) * speed;
-        enemy.y += Math.sin(angle) * speed;
+        if (!enemy.vanishing) {
+            const angle = Math.atan2(player.y + offsetY - enemy.y, player.x + offsetX - enemy.x);
+            const speed = Math.min(enemyMaxSpeed, enemy.speed + score * 0.01);
+            
+            enemy.x += Math.cos(angle) * speed;
+            enemy.y += Math.sin(angle) * speed;
 
-        // Avoid overlapping with other enemies
-        enemies.forEach(otherEnemy => {
-            if (enemy !== otherEnemy && isColliding(enemy, otherEnemy)) {
-                const angleBetween = Math.atan2(otherEnemy.y - enemy.y, otherEnemy.x - enemy.x);
-                enemy.x -= Math.cos(angleBetween) * speed;
-                enemy.y -= Math.sin(angleBetween) * speed;
-            }
-        });
+            // Avoid overlapping with other enemies
+            enemies.forEach(otherEnemy => {
+                if (enemy !== otherEnemy && isColliding(enemy, otherEnemy)) {
+                    const angleBetween = Math.atan2(otherEnemy.y - enemy.y, otherEnemy.x - enemy.x);
+                    enemy.x -= Math.cos(angleBetween) * speed;
+                    enemy.y -= Math.sin(angleBetween) * speed;
+                }
+            });
+        }
     });
 }
 
@@ -117,24 +131,33 @@ function spawnEnemy() {
     const size = 20;
     const x = Math.random() * (canvas.width + offsetX - size);
     const y = Math.random() * (canvas.height + offsetY - size);
-    enemies.push({ x, y, size });
+    enemies.push({
+        x,
+        y,
+        size,
+        speed: Math.random() * 1.5 + 0.5,
+        hp: 20,
+        vanishing: false,
+        alpha: 1
+    });
 }
 
 function checkCollisions() {
     enemies.forEach((enemy, enemyIndex) => {
         bullets.forEach((bullet, bulletIndex) => {
             if (isColliding(bullet, enemy)) {
-                createExplosion(enemy.x, enemy.y);
-                enemies.splice(enemyIndex, 1);
+                enemy.hp -= player.attack;
                 bullets.splice(bulletIndex, 1);
-                score++;
+                if (enemy.hp <= 0) {
+                    startVanishing(enemy);
+                    score++;
+                }
             }
         });
 
-        if (isColliding(player, enemy)) {
-            createExplosion(player.x + offsetX, player.y + offsetY);
-            enemies.splice(enemyIndex, 1);
-            score++;
+        if (!enemy.vanishing && isColliding(player, enemy)) {
+            player.hp -= 10;
+            startVanishing(enemy);
         }
     });
 }
@@ -208,6 +231,16 @@ function createExplosion(x, y) {
         radius: 20,
         alpha: 1
     });
+}
+
+function startVanishing(enemy) {
+    enemy.vanishing = true;
+    setInterval(() => {
+        enemy.alpha -= 0.05;
+        if (enemy.alpha <= 0) {
+            enemies.splice(enemies.indexOf(enemy), 1);
+        }
+    }, 50);
 }
 
 function update() {
