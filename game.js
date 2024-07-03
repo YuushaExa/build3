@@ -8,19 +8,32 @@ const tileSize = 50;
 const mapWidth = 100;
 const mapHeight = 100;
 
-const player = {
+const characters = {
+    mecha: {
+        speed: 5,
+        hp: 100,
+        attack: 10,
+        inventory: ["Gun"]
+    },
+    cyborg: {
+        speed: 5,
+        hp: 100,
+        attack: 15,
+        inventory: ["Shotgun"]
+    }
+};
+
+let player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
     size: 20,
-    speed: 5,
+    speed: 0,
     dx: 0,
     dy: 0,
-    hp: 100,
-    attack: 10,
-    inventory: new Array(6).fill(null)
+    hp: 0,
+    attack: 0,
+    inventory: []
 };
-
-player.inventory[0] = "Gun";
 
 const enemies = [];
 const bullets = [];
@@ -148,8 +161,15 @@ function checkCollisions() {
     enemies.forEach((enemy, enemyIndex) => {
         bullets.forEach((bullet, bulletIndex) => {
             if (isColliding(bullet, enemy)) {
-                enemy.hp -= player.attack;
-                bullets.splice(bulletIndex, 1);
+                enemy.hp -= bullet.attack;
+                if (bullet.penetrate) {
+                    bullet.penetrate--;
+                    if (bullet.penetrate <= 0) {
+                        bullets.splice(bulletIndex, 1);
+                    }
+                } else {
+                    bullets.splice(bulletIndex, 1);
+                }
                 if (enemy.hp <= 0 && !enemy.vanishing) {
                     startVanishing(enemy);
                     score++;
@@ -213,16 +233,35 @@ function findClosestEnemy() {
 
 function shootClosestEnemy() {
     const closestEnemy = findClosestEnemy();
-    if (closestEnemy && player.inventory[0] === "Gun") {
+    if (closestEnemy) {
         const angle = Math.atan2(closestEnemy.y - (player.y + offsetY), closestEnemy.x - (player.x + offsetX));
-        const speed = 5;
-        bullets.push({
-            x: player.x + offsetX,
-            y: player.y + offsetY,
-            size: 5,
-            dx: Math.cos(angle) * speed,
-            dy: Math.sin(angle) * speed
-        });
+        if (player.inventory[0] === "Gun") {
+            const speed = 5;
+            bullets.push({
+                x: player.x + offsetX,
+                y: player.y + offsetY,
+                size: 5,
+                dx: Math.cos(angle) * speed,
+                dy: Math.sin(angle) * speed,
+                attack: player.attack,
+                penetrate: 0
+            });
+        } else if (player.inventory[0] === "Shotgun") {
+            const spreadAngle = 0.1;
+            for (let i = -1; i <= 1; i += 2) {
+                const bulletAngle = angle + i * spreadAngle;
+                const speed = 5;
+                bullets.push({
+                    x: player.x + offsetX,
+                    y: player.y + offsetY,
+                    size: 5,
+                    dx: Math.cos(bulletAngle) * speed,
+                    dy: Math.sin(bulletAngle) * speed,
+                    attack: player.attack,
+                    penetrate: 2
+                });
+            }
+        }
     }
 }
 
@@ -299,6 +338,14 @@ setInterval(shootClosestEnemy, 1000);
 setInterval(spawnEnemy, 2000);
 
 document.getElementById('startButton').addEventListener('click', () => {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const characterData = characters[selectedCharacter];
+
+    player.speed = characterData.speed;
+    player.hp = characterData.hp;
+    player.attack = characterData.attack;
+    player.inventory = [...characterData.inventory];
+
     gameStarted = true;
     document.getElementById('menu').style.display = 'none';
     canvas.style.display = 'block';
