@@ -391,33 +391,34 @@
             }
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+     function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const offsetX = player.x - canvas.width / 2;
-            const offsetY = player.y - canvas.height / 2;
+    const offsetX = player.x - canvas.width / 2;
+    const offsetY = player.y - canvas.height / 2;
 
-            generateTiles(offsetX, offsetY);
+    generateTiles(offsetX, offsetY);
 
-            tiles.forEach(tile => tile.draw(offsetX, offsetY));
-            player.draw(offsetX, offsetY);
-            bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
-            enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
-            drawParticles(offsetX, offsetY);
+    tiles.forEach(tile => tile.draw(offsetX, offsetY));
+    player.draw(offsetX, offsetY);
+    bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
+    enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
+    drawParticles(offsetX, offsetY);
 
-            const fps = fpsHistory.length ? fpsHistory.reduce((a, b) => a + b) / fpsHistory.length : 0;
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'black';
-            ctx.fillText(Score: ${player.score}, 10, 20);
-            ctx.fillText(FPS: ${Math.round(fps)}, 10, 40);
-            ctx.fillText(HP: ${player.hp}, 10, 60);
+    const fps = fpsHistory.length ? fpsHistory.reduce((a, b) => a + b) / fpsHistory.length : 0;
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'black';
+    ctx.fillText(`Score: ${player.score}`, 10, 20);
+    ctx.fillText(`FPS: ${Math.round(fps)}`, 10, 40);
+    ctx.fillText(`HP: ${player.hp}`, 10, 60);
 
-            ctx.fillText(Bullet Attack: ${player.bulletAttack} ${player.upgradeHistory.bullet > 0 ? (+${player.upgradeHistory.bullet}) : ''}, 10, 80);
-            if (player.hasVulcan) {
-                ctx.fillText(Vulcan Attack: ${player.vulcanAttack} ${player.upgradeHistory.vulcan > 0 ? (+${player.upgradeHistory.vulcan}) : ''}, 10, 100);
-            }
-            ctx.fillText(Max Health: ${player.maxHealth} ${player.upgradeHistory.health > 0 ? (+${player.upgradeHistory.health * 5}) : ''}, 10, 120);
-        }
+    ctx.fillText(`Bullet Attack: ${player.bulletAttack} ${player.upgradeHistory.bullet > 0 ? '(+' + player.upgradeHistory.bullet + ')' : ''}`, 10, 80);
+    if (player.hasVulcan) {
+        ctx.fillText(`Vulcan Attack: ${player.vulcanAttack} ${player.upgradeHistory.vulcan > 0 ? '(+' + player.upgradeHistory.vulcan + ')' : ''}`, 10, 100);
+    }
+    ctx.fillText(`Max Health: ${player.maxHealth} ${player.upgradeHistory.health > 0 ? '(+' + player.upgradeHistory.health * 5 + ')' : ''}`, 10, 120);
+}
+
 
         function generateTiles(offsetX, offsetY) {
             const startX = Math.floor(offsetX / tileSize) * tileSize;
