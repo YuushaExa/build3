@@ -146,7 +146,7 @@
                 const closestEnemy = this.findClosestEnemy();
                 if (closestEnemy) {
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
+                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'assets/bullet.png', angle));
                 }
             }
 
@@ -156,7 +156,7 @@
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
                     for (let i = 0; i < 6; i++) {
                         const spreadAngle = angle + (i - 3) * 0.1;
-                        bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
+                        bullets.push(new Bullet(this.x, this.y, 5, 7, 'assets/bullet.png', spreadAngle));
                     }
                 }
             }
@@ -195,7 +195,7 @@
 
             unlockVulcan() {
                 this.weaponSprite = new Image();
-                this.weaponSprite.src = 'vulcan.png';
+                this.weaponSprite.src = 'assets/vulcan.png';
                 this.hasVulcan = true;
             }
 
@@ -310,7 +310,7 @@
             }
         }
 
-        const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
+        const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'assets/mecha.png', 10);
         const enemies = [];
         const bullets = [];
         const particles = [];
@@ -460,9 +460,9 @@
             }
 
             const enemyTypes = [
-                { radius: 15, speed: 2, sprite: 'enemy1.png', hp: 3 },
-                { radius: 10, speed: 3, sprite: 'enemy2.png', hp: 2 },
-                { radius: 20, speed: 1.5, sprite: 'enemy3.png', hp: 5 }
+                { radius: 15, speed: 2, sprite: 'assets/enemy1.png', hp: 3 },
+                { radius: 10, speed: 3, sprite: 'assets/enemy2.png', hp: 2 },
+                { radius: 20, speed: 1.5, sprite: 'assets/enemy3.png', hp: 5 }
             ];
 
             const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
