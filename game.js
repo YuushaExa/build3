@@ -43,13 +43,16 @@ function drawEnemies() {
     enemies.forEach(enemy => {
         if (enemy.vanishing) {
             ctx.fillStyle = `rgba(255, 0, 0, ${enemy.alpha})`;
+            ctx.beginPath();
+            ctx.arc(enemy.x - offsetX, enemy.y - offsetY, enemy.size / 2 * enemy.alpha, 0, Math.PI * 2);
+            ctx.fill();
         } else {
             ctx.fillStyle = 'red';
+            ctx.fillRect(enemy.x - offsetX, enemy.y - offsetY, enemy.size, enemy.size);
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.fillText(`HP: ${enemy.hp}`, enemy.x - offsetX, enemy.y - offsetY - 10);
         }
-        ctx.fillRect(enemy.x - offsetX, enemy.y - offsetY, enemy.size, enemy.size);
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        ctx.fillText(`HP: ${enemy.hp}`, enemy.x - offsetX, enemy.y - offsetY - 10);
     });
 }
 
@@ -148,7 +151,7 @@ function checkCollisions() {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= player.attack;
                 bullets.splice(bulletIndex, 1);
-                if (enemy.hp <= 0) {
+                if (enemy.hp <= 0 && !enemy.vanishing) {
                     startVanishing(enemy);
                     score++;
                 }
@@ -235,9 +238,10 @@ function createExplosion(x, y) {
 
 function startVanishing(enemy) {
     enemy.vanishing = true;
-    setInterval(() => {
+    const vanishInterval = setInterval(() => {
         enemy.alpha -= 0.05;
         if (enemy.alpha <= 0) {
+            clearInterval(vanishInterval);
             enemies.splice(enemies.indexOf(enemy), 1);
         }
     }, 50);
