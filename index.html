@@ -3,33 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Clone</title>
+    <title>Game</title>
     <style>
-        /* Your styles here */
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: #e0e0e0;
+        }
+        .menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .menu.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="stats">
-        <div id="hp"></div>
-        <div id="score"></div>
-        <div id="bulletAttack"></div>
-        <div id="vulcanAttack"></div>
-        <div id="maxHealth"></div>
-    </div>
-    <div id="inventory"></div>
-    <div id="levelUpMenu" class="menu">
-        <button class="optionButton"></button>
-        <button class="optionButton"></button>
-        <button class="optionButton"></button>
+    <div id="menu" class="menu">
+        <h2>Choose an Option</h2>
+        <button id="option1">Enhance Bullet Attack</button>
+        <button id="option2">Unlock M61 Vulcan</button>
+        <button id="option3">Enhance Max Health</button>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const statsDiv = document.getElementById('stats');
-        const inventoryDiv = document.getElementById('inventory');
-        const levelUpMenu = document.getElementById('levelUpMenu');
-        const optionButtons = document.querySelectorAll('.optionButton');
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = 2;
+                this.alpha = 1;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 2,
+                    y: (Math.random() - 0.5) * 2
+                };
+                this.gravity = 0.1;
+                this.friction = 0.98;
+                this.lifespan = 100;
+            }
+
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.01;
+                this.lifespan--;
+            }
+
+            draw(offsetX, offsetY) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x - offsetX, this.y - offsetY, this.radius, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
 
         class Entity {
             constructor(x, y, radius, speed, sprite) {
@@ -41,7 +89,7 @@
                 this.sprite.src = sprite;
             }
 
-            draw(offsetX = 0, offsetY = 0) {
+            draw(offsetX, offsetY) {
                 ctx.drawImage(this.sprite, this.x - this.radius - offsetX, this.y - this.radius - offsetY, this.radius * 2, this.radius * 2);
             }
         }
@@ -50,78 +98,125 @@
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
                 this.hp = hp;
-                this.maxHealth = hp;
+                this.basicCooldown = 0;
+                this.vulcanCooldown = 0;
+                this.vulcanFiring = false;
+                this.vulcanFireDuration = 0;
                 this.score = 0;
                 this.bulletAttack = 1;
                 this.vulcanAttack = 1;
-                this.inventory = [];
-                this.upgradeHistory = { bullet: 0, health: 0, vulcan: 0 };
-                this.weapon = weapons[0]; // Starting weapon: Gun
-                this.vulcanCooldown = 0;
+                this.maxHealth = 10;
+                this.weaponSprite = null;
+                this.hasVulcan = false;
+                this.upgradeHistory = {
+                    bullet: 0,
+                    vulcan: 0,
+                    health: 0
+                };
             }
 
             move(keys) {
-                if (keys['w']) this.y -= this.speed;
-                if (keys['a']) this.x -= this.speed;
-                if (keys['s']) this.y += this.speed;
-                if (keys['d']) this.x += this.speed;
-
-                // Ensure player stays within bounds
-                this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-                this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                if (keys['ArrowUp']) this.y -= this.speed;
+                if (keys['ArrowDown']) this.y += this.speed;
+                if (keys['ArrowLeft']) this.x -= this.speed;
+                if (keys['ArrowRight']) this.x += this.speed;
             }
 
             shoot() {
-                const now = Date.now();
-                if (!this.lastShootTime || now - this.lastShootTime >= this.weapon.fireRate) {
-                    this.lastShootTime = now;
-                    const closestEnemy = this.findClosestEnemy();
-                    if (closestEnemy) {
-                        const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                        bullets.push(new Bullet(this.x, this.y, 5, 10, 'assets/bullet.png', angle));
+                if (this.basicCooldown === 0) {
+                    this.shootBasic();
+                    this.basicCooldown = 15;
+                }
+
+                if (this.vulcanFiring) {
+                    if (this.vulcanFireDuration > 0) {
+                        this.shootVulcan();
+                        this.vulcanFireDuration -= 1 / 60;
+                    } else {
+                        this.vulcanFiring = false;
+                        this.vulcanCooldown = 10;
+                    }
+                }
+
+                if (this.basicCooldown > 0) this.basicCooldown--;
+                if (this.vulcanCooldown > 0) this.vulcanCooldown -= 1 / 60;
+            }
+
+            shootBasic() {
+                const closestEnemy = this.findClosestEnemy();
+                if (closestEnemy) {
+                    const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
+                }
+            }
+
+            shootVulcan() {
+                const closestEnemy = this.findClosestEnemy();
+                if (closestEnemy) {
+                    const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                    for (let i = 0; i < 6; i++) {
+                        const spreadAngle = angle + (i - 3) * 0.1;
+                        bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
                     }
                 }
             }
 
             findClosestEnemy() {
-                let closestEnemy = null;
-                let closestDistance = Infinity;
+                let closest = null;
+                let minDist = Infinity;
                 enemies.forEach(enemy => {
-                    const distance = Math.hypot(enemy.x - this.x, enemy.y - this.y);
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        closestEnemy = enemy;
+                    const dx = enemy.x - this.x;
+                    const dy = enemy.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < minDist) {
+                        closest = enemy;
+                        minDist = dist;
                     }
                 });
-                return closestEnemy;
+                return closest;
             }
 
             addScore(points) {
                 this.score += points;
-                this.checkLevelUp();
-                updateStats();
-            }
-
-            checkLevelUp() {
-                const thresholds = [10, 50, 100, 200, 500, 1000];
-                if (thresholds.includes(this.score)) {
-                    showLevelUpMenu();
+                if ([100, 300, 500, 1000].includes(this.score)) {
+                    showMenu();
                 }
             }
 
-            addWeapon(weapon) {
-                if (this.inventory.length < 6) {
-                    this.inventory.push(weapon);
-                }
-                updateInventory();
+            enhanceBulletAttack() {
+                this.bulletAttack++;
+                this.upgradeHistory.bullet++;
             }
 
-            enhanceWeapon(weaponName) {
-                const weapon = this.inventory.find(item => item.name === weaponName);
-                if (weapon) {
-                    weapon.upgrade += 1;
+            enhanceVulcanAttack() {
+                this.vulcanAttack++;
+                this.upgradeHistory.vulcan++;
+            }
+
+            unlockVulcan() {
+                this.weaponSprite = new Image();
+                this.weaponSprite.src = 'vulcan.png';
+                this.hasVulcan = true;
+            }
+
+            enhanceMaxHealth() {
+                this.maxHealth += 5;
+                this.hp += 5;
+                this.upgradeHistory.health++;
+            }
+
+            startVulcanFire() {
+                if (this.hasVulcan && !this.vulcanFiring && this.vulcanCooldown <= 0) {
+                    this.vulcanFiring = true;
+                    this.vulcanFireDuration = 3;
                 }
-                updateInventory();
+            }
+
+            draw(offsetX, offsetY) {
+                super.draw(offsetX, offsetY);
+                if (this.weaponSprite) {
+                    ctx.drawImage(this.weaponSprite, this.x - this.radius - offsetX - 20, this.y - this.radius - offsetY - 20, this.radius * 2 + 40, this.radius * 2 + 40);
+                }
             }
         }
 
@@ -129,25 +224,20 @@
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
                 this.hp = hp;
-                this.angle = Math.random() * Math.PI * 2;
             }
 
             update() {
-                this.x += this.speed * Math.cos(this.angle);
-                this.y += this.speed * Math.sin(this.angle);
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.angle += Math.PI;
-                }
                 const dx = player.x - this.x;
                 const dy = player.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > 0) {
+                    this.x += (dx / distance) * this.speed;
+                    this.y += (dy / distance) * this.speed;
+                }
+
                 if (distance < player.radius + this.radius) {
                     player.hp -= 1;
-                    if (player.hp <= 0) {
-                        player.hp = 0;
-                        alert('Game Over');
-                        window.location.reload();
-                    }
                 }
             }
         }
@@ -161,129 +251,252 @@
             update() {
                 this.x += this.speed * Math.cos(this.angle);
                 this.y += this.speed * Math.sin(this.angle);
+            }
+        }
 
-                enemies.forEach((enemy, index) => {
-                    const dx = enemy.x - this.x;
-                    const dy = enemy.y - this.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+        class BackgroundTile {
+            constructor(x, y, size, color) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.color = color;
+            }
 
-                    if (distance < enemy.radius + this.radius) {
-                        enemy.hp -= player.bulletAttack;
-                        if (enemy.hp <= 0) {
-                            enemies.splice(index, 1);
-                            player.addScore(10); // Adjust score points per enemy
-                        }
-                    }
+            draw(offsetX, offsetY) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - offsetX, this.y - offsetY, this.size, this.size);
+            }
+        }
+
+        class Menu {
+            constructor() {
+                this.menuElement = document.getElementById('menu');
+                this.option1 = document.getElementById('option1');
+                this.option2 = document.getElementById('option2');
+                this.option3 = document.getElementById('option3');
+
+                this.option1.addEventListener('click', () => {
+                    player.enhanceBulletAttack();
+                    this.hide();
+                });
+
+                this.option2.addEventListener('click', () => {
+                    player.unlockVulcan();
+                    this.hide();
+                });
+
+                this.option3.addEventListener('click', () => {
+                    player.enhanceMaxHealth();
+                    this.hide();
                 });
             }
-        }
 
-        const particles = [];
-        const enemies = [];
-        const bullets = [];
-        let keys = {};
-        let player;
-        let offsetX = 0;
-        let offsetY = 0;
-        let animationFrameId;
-
-        const weapons = [
-            { name: 'Gun', fireRate: 500, image: 'https://opengameart.org/sites/default/files/gun.png', upgrade: 0 },
-            { name: 'Vulcan', fireRate: 200, image: 'assets/vulcan.png', upgrade: 0 },
-            { name: 'Sword', fireRate: 1000, image: 'https://opengameart.org/sites/default/files/sword.png', upgrade: 0 },
-            { name: 'Rifle', fireRate: 600, image: 'https://opengameart.org/sites/default/files/rifle.png', upgrade: 0 },
-            { name: 'Sniper', fireRate: 1200, image: 'https://opengameart.org/sites/default/files/sniper.png', upgrade: 0 },
-            { name: 'Bomb', fireRate: 1500, image: 'https://opengameart.org/sites/default/files/bomb.png', upgrade: 0 },
-            { name: 'Laser', fireRate: 800, image: 'https://opengameart.org/sites/default/files/laser.png', upgrade: 0 },
-            { name: 'Armor', fireRate: 0, image: 'https://opengameart.org/sites/default/files/armor.png', upgrade: 0 },
-            { name: 'Boots', fireRate: 0, image: 'https://opengameart.org/sites/default/files/boots.png', upgrade: 0 },
-            { name: 'Helmet', fireRate: 0, image: 'https://opengameart.org/sites/default/files/helmet.png', upgrade: 0 },
-        ];
-
-        function showLevelUpMenu() {
-            const availableWeapons = weapons.filter(weapon => !player.inventory.some(item => item.name === weapon.name));
-            const randomOptions = [];
-            while (randomOptions.length < 3 && availableWeapons.length > 0) {
-                const randomIndex = Math.floor(Math.random() * availableWeapons.length);
-                const option = availableWeapons.splice(randomIndex, 1)[0];
-                randomOptions.push(option);
+            show() {
+                this.menuElement.classList.add('active');
+                this.pauseGame();
             }
 
-            randomOptions.forEach((option, index) => {
-                optionButtons[index].textContent = option.name;
-                optionButtons[index].onclick = () => {
-                    if (player.inventory.some(item => item.name === option.name)) {
-                        player.enhanceWeapon(option.name);
-                    } else {
-                        player.addWeapon(option);
-                    }
-                    levelUpMenu.style.display = 'none';
-                };
-            });
+            hide() {
+                this.menuElement.classList.remove('active');
+                this.resumeGame();
+            }
 
-            levelUpMenu.style.display = 'block';
+            pauseGame() {
+                this.paused = true;
+            }
+
+            resumeGame() {
+                this.paused = false;
+            }
         }
 
-        function updateStats() {
-            statsDiv.innerHTML = `
-                <div>HP: ${player.hp}/${player.maxHealth}</div>
-                <div>Score: ${player.score}</div>
-                <div>Bullet Attack: ${player.bulletAttack}</div>
-                <div>Vulcan Attack: ${player.vulcanAttack}</div>
-            `;
+        const player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
+        const enemies = [];
+        const bullets = [];
+        const particles = [];
+        const keys = {};
+        const tileSize = 100;
+        const tiles = new Map();
+        let spawnRate = 0.005;
+        let timeElapsed = 0;
+        const fpsHistory = [];
+        let lastTimestamp = 0;
+        const menu = new Menu();
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                player.startVulcanFire();
+            }
+        });
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        function gameLoop(timestamp) {
+            if (menu.paused) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            if (lastTimestamp) {
+                const delta = timestamp - lastTimestamp;
+                fpsHistory.push(1000 / delta);
+                if (fpsHistory.length > 60) {
+                    fpsHistory.shift();
+                }
+            }
+            lastTimestamp = timestamp;
+
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
         }
 
-        function updateInventory() {
-            inventoryDiv.innerHTML = player.inventory.map(item => `<div>${item.name} (Level ${item.upgrade + 1})</div>`).join('');
-        }
-
-        function spawnEnemies() {
-            const spawnInterval = 3000; // Adjust spawn rate as needed
-            setInterval(() => {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const enemy = new Enemy(x, y, 15, 1, 'assets/enemy1.png', 10);
-                enemies.push(enemy);
-            }, spawnInterval);
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+        function update() {
             player.move(keys);
             player.shoot();
-            player.draw(offsetX, offsetY);
 
             bullets.forEach((bullet, index) => {
                 bullet.update();
-                bullet.draw(offsetX, offsetY);
+                if (Math.abs(bullet.x - player.x) > canvas.width || Math.abs(bullet.y - player.y) > canvas.height) {
+                    bullets.splice(index, 1);
+                }
             });
 
-            enemies.forEach(enemy => {
+            enemies.forEach((enemy, index) => {
                 enemy.update();
-                enemy.draw(offsetX, offsetY);
+                bullets.forEach((bullet, bulletIndex) => {
+                    const distance = Math.sqrt((bullet.x - enemy.x) ** 2 + (bullet.y - enemy.y) ** 2);
+                    if (distance < bullet.radius + enemy.radius) {
+                        enemy.hp -= player.bulletAttack;
+                        bullets.splice(bulletIndex, 1);
+                        if (enemy.hp <= 0) {
+                            enemies.splice(index, 1);
+                            player.addScore(1);
+                            enemyDestroyedEffect(enemy);
+                        }
+                    }
+                });
             });
 
-            updateStats();
-            animationFrameId = requestAnimationFrame(gameLoop);
+            updateParticles();
+
+            timeElapsed += 1 / 60;
+            if (timeElapsed >= 10) {
+                timeElapsed = 0;
+                spawnRate += 0.1;
+            }
+
+            if (Math.random() < spawnRate) {
+                spawnEnemy();
+            }
         }
 
-        function init() {
-            player = new Player(canvas.width / 2, canvas.height / 2, 20, 3, 'assets/mecha.png', 100);
-            spawnEnemies();
-            updateStats();
-            gameLoop();
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const offsetX = player.x - canvas.width / 2;
+            const offsetY = player.y - canvas.height / 2;
+
+            generateTiles(offsetX, offsetY);
+
+            tiles.forEach(tile => tile.draw(offsetX, offsetY));
+            player.draw(offsetX, offsetY);
+            bullets.forEach(bullet => bullet.draw(offsetX, offsetY));
+            enemies.forEach(enemy => enemy.draw(offsetX, offsetY));
+            drawParticles(offsetX, offsetY);
+
+            const fps = fpsHistory.length ? fpsHistory.reduce((a, b) => a + b) / fpsHistory.length : 0;
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'black';
+            ctx.fillText(Score: ${player.score}, 10, 20);
+            ctx.fillText(FPS: ${Math.round(fps)}, 10, 40);
+            ctx.fillText(HP: ${player.hp}, 10, 60);
+
+            ctx.fillText(Bullet Attack: ${player.bulletAttack} ${player.upgradeHistory.bullet > 0 ? (+${player.upgradeHistory.bullet}) : ''}, 10, 80);
+            if (player.hasVulcan) {
+                ctx.fillText(Vulcan Attack: ${player.vulcanAttack} ${player.upgradeHistory.vulcan > 0 ? (+${player.upgradeHistory.vulcan}) : ''}, 10, 100);
+            }
+            ctx.fillText(Max Health: ${player.maxHealth} ${player.upgradeHistory.health > 0 ? (+${player.upgradeHistory.health * 5}) : ''}, 10, 120);
         }
 
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-        });
+        function generateTiles(offsetX, offsetY) {
+            const startX = Math.floor(offsetX / tileSize) * tileSize;
+            const startY = Math.floor(offsetY / tileSize) * tileSize;
+            const endX = startX + canvas.width + tileSize;
+            const endY = startY + canvas.height + tileSize;
 
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-        });
+            for (let x = startX; x <= endX; x += tileSize) {
+                for (let y = startY; y <= endY; y += tileSize) {
+                    const key = ${x},${y};
+                    if (!tiles.has(key)) {
+                        const color = (Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0 ? '#a0a0a0' : '#909090';
+                        tiles.set(key, new BackgroundTile(x, y, tileSize, color));
+                    }
+                }
+            }
+        }
 
-        init();
+        function spawnEnemy() {
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+
+            switch (side) {
+                case 0:
+                    x = player.x - canvas.width / 2 - 50;
+                    y = player.y + (Math.random() - 0.5) * canvas.height;
+                    break;
+                case 1:
+                    x = player.x + canvas.width / 2 + 50;
+                    y = player.y + (Math.random() - 0.5) * canvas.height;
+                    break;
+                case 2:
+                    x = player.x + (Math.random() - 0.5) * canvas.width;
+                    y = player.y - canvas.height / 2 - 50;
+                    break;
+                case 3:
+                    x = player.x + (Math.random() - 0.5) * canvas.width;
+                    y = player.y + canvas.height / 2 + 50;
+                    break;
+            }
+
+            const enemyTypes = [
+                { radius: 15, speed: 2, sprite: 'enemy1.png', hp: 3 },
+                { radius: 10, speed: 3, sprite: 'enemy2.png', hp: 2 },
+                { radius: 20, speed: 1.5, sprite: 'enemy3.png', hp: 5 }
+            ];
+
+            const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+            enemies.push(new Enemy(x, y, type.radius, type.speed, type.sprite, type.hp));
+        }
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function updateParticles() {
+            particles.forEach((particle, index) => {
+                particle.update();
+                if (particle.lifespan <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+
+        function drawParticles(offsetX, offsetY) {
+            particles.forEach(particle => particle.draw(offsetX, offsetY));
+        }
+
+        function enemyDestroyedEffect(enemy) {
+            createParticles(enemy.x, enemy.y, '#ff0000', 20);
+        }
+
+        function showMenu() {
+            menu.show();
+        }
+
+        gameLoop();
     </script>
 </body>
 </html>
