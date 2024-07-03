@@ -52,13 +52,13 @@ class Player extends Entity {
         }
 
         if (this.basicCooldown <= 0) {
-            bullets.push(new Bullet(this.x, this.y, 5, 10, 'bullet.png', this.bulletAttack));
+            bullets.push(new Bullet(this.x, this.y, 5, 10, 'assets/bullet.png', this.bulletAttack));
             this.basicCooldown = 30;  // 0.5 seconds cooldown
         }
 
         if (this.vulcanFiring && this.vulcanCooldown <= 0) {
             for (let i = 0; i < 6; i++) {
-                bullets.push(new Bullet(this.x, this.y, 5, 10, 'vulcan.png', this.vulcanAttack));
+                bullets.push(new Bullet(this.x, this.y, 5, 10, 'assets/vulcan.png', this.vulcanAttack));
             }
         }
     }
