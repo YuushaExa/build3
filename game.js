@@ -5,8 +5,8 @@ canvas.width = 800;
 canvas.height = 600;
 
 const tileSize = 50;
-const mapWidth = 100;  // Number of tiles horizontally
-const mapHeight = 100; // Number of tiles vertically
+const mapWidth = 100;
+const mapHeight = 100;
 
 const player = {
     x: canvas.width / 2,
@@ -20,7 +20,7 @@ const player = {
     inventory: new Array(6).fill(null)
 };
 
-player.inventory[0] = "Gun"; // Adding a basic weapon (Gun) to the inventory
+player.inventory[0] = "Gun";
 
 const enemies = [];
 const bullets = [];
@@ -30,6 +30,7 @@ const enemyMaxSpeed = 2.5;
 let score = 0;
 let offsetX = 0;
 let offsetY = 0;
+let gameStarted = false;
 
 function drawPlayer() {
     ctx.fillStyle = 'blue';
@@ -90,11 +91,10 @@ function moveEnemies() {
         if (!enemy.vanishing) {
             const angle = Math.atan2(player.y + offsetY - enemy.y, player.x + offsetX - enemy.x);
             const speed = Math.min(enemyMaxSpeed, enemy.speed + score * 0.01);
-            
+
             enemy.x += Math.cos(angle) * speed;
             enemy.y += Math.sin(angle) * speed;
 
-            // Avoid overlapping with other enemies
             enemies.forEach(otherEnemy => {
                 if (enemy !== otherEnemy && isColliding(enemy, otherEnemy)) {
                     const angleBetween = Math.atan2(otherEnemy.y - enemy.y, otherEnemy.x - enemy.x);
@@ -111,7 +111,6 @@ function moveBullets() {
         bullet.x += bullet.dx;
         bullet.y += bullet.dy;
 
-        // Remove bullets that go off-screen
         if (
             bullet.x < offsetX || bullet.x > offsetX + canvas.width ||
             bullet.y < offsetY || bullet.y > offsetY + canvas.height
@@ -248,6 +247,8 @@ function startVanishing(enemy) {
 }
 
 function update() {
+    if (!gameStarted) return;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     generateTiles();
@@ -266,9 +267,6 @@ function update() {
 
     requestAnimationFrame(update);
 }
-
-// Shoot at the closest enemy every 1 second
-setInterval(shootClosestEnemy, 1000);
 
 function keyDown(e) {
     if (e.key === 'ArrowRight' || e.key === 'd') {
@@ -297,5 +295,12 @@ function keyUp(e) {
 document.addEventListener('keydown', keyDown);
 document.addEventListener('keyup', keyUp);
 
+setInterval(shootClosestEnemy, 1000);
 setInterval(spawnEnemy, 2000);
-update();
+
+document.getElementById('startButton').addEventListener('click', () => {
+    gameStarted = true;
+    document.getElementById('menu').style.display = 'none';
+    canvas.style.display = 'block';
+    update();
+});
