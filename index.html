@@ -3,14 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phaser Game</title>
+    <title>Game</title>
     <style>
-        body { margin: 0; padding: 0; }
-        canvas { display: block; }
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: #e0e0e0;
+        }
+        .menu, .start-menu, .character-menu, .map-menu, .story-overlay, .end-overlay, .level-up-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .menu.active, .start-menu.active, .character-menu.active, .map-menu.active, .story-overlay.active, .end-overlay.active, .level-up-menu.active {
+            display: block;
+        }
+        .inventory {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        .inventory-slot {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+        }
     </style>
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
-    <script type="module" src="main.js"></script>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div id="startMenu" class="start-menu active">
+        <h2>Welcome to the Game</h2>
+        <button id="startButton">Start</button>
+    </div>
+    
+    <div id="characterMenu" class="character-menu">
+        <h2>Select Your Character</h2>
+        <button id="character1">Mecha (Default)</button>
+    </div>
+    
+    <div id="mapMenu" class="map-menu">
+        <h2>Select Map</h2>
+        <div id="mapOptions"></div>
+    </div>
+    
+    <div id="storyOverlay" class="story-overlay">
+        <h2>Map Story</h2>
+        <p id="storyText"></p>
+        <button id="continueButton">Continue</button>
+    </div>
+    
+    <div id="endOverlay" class="end-overlay">
+        <h2>Congratulations!</h2>
+        <p>You have defeated the boss!</p>
+        <button id="nextMapButton">Next Map</button>
+    </div>
+    
+    <div id="menu" class="menu">
+        <h2>Choose an Option</h2>
+        <button id="option1">Enhance Bullet Attack</button>
+        <button id="option2">Unlock M61 Vulcan</button>
+        <button id="option3">Enhance Max Health</button>
+    </div>
+    
+    <div id="levelUpMenu" class="level-up-menu">
+        <h2>Level Up!</h2>
+        <div id="levelUpOptions"></div>
+    </div>
+    
+    <div class="inventory">
+        <div class="inventory-slot" id="slot1"></div>
+        <div class="inventory-slot" id="slot2"></div>
+        <div class="inventory-slot" id="slot3"></div>
+        <div class="inventory-slot" id="slot4"></div>
+        <div class="inventory-slot" id="slot5"></div>
+        <div class="inventory-slot" id="slot6"></div>
+    </div>
+
+    <script type="module" src="./game.js"></script>
 </body>
 </html>
