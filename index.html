@@ -40,7 +40,7 @@
 
         player.inventory[0] = "Gun"; // Adding a basic weapon (Gun) to the inventory
 
-        const enemies = [];
+        let enemies = [];
         const enemySpeed = 1.5;
         const enemyMaxSpeed = 2.5;
         let score = 0;
@@ -62,7 +62,7 @@
             ctx.fillStyle = 'yellow';
             bullets.forEach(bullet => {
                 ctx.beginPath();
-                ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
+                ctx.arc(bullet.x - offsetX, bullet.y - offsetY, 2, 0, Math.PI * 2);
                 ctx.fill();
             });
         }
@@ -194,13 +194,6 @@
                 const angle = Math.atan2(closestEnemy.y - (player.y + offsetY), closestEnemy.x - (player.x + offsetX));
                 const bulletSpeed = 5;
                 bullets.push(new Bullet(player.x + offsetX, player.y + offsetY, bulletSpeed, angle));
-
-                // Remove closest enemy
-                const index = enemies.indexOf(closestEnemy);
-                if (index !== -1) {
-                    enemies.splice(index, 1);
-                    score++;
-                }
             }
         }
 
@@ -210,13 +203,13 @@
                 bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
                 // Check if bullet goes out of bounds
-                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                if (bullet.x < 0 || bullet.x > canvas.width + offsetX || bullet.y < 0 || bullet.y > canvas.height + offsetY) {
                     bullet.active = false;
                 }
             });
 
             // Remove inactive bullets
-            bullets.filter(bullet => bullet.active);
+            bullets = bullets.filter(bullet => bullet.active);
         }
 
         // Shoot at the closest enemy every 1 second
