@@ -47,6 +47,14 @@
             max-width: 100%;
             max-height: 100%;
         }
+        #stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +80,14 @@
     <div id="inventory">
         <!-- Inventory slots -->
     </div>
+    <div id="stats">
+        <h3>Stats</h3>
+        <p id="hp">HP: </p>
+        <p id="score">Score: </p>
+        <p id="bulletAttack">Bullet Attack: </p>
+        <p id="vulcanAttack">Vulcan Attack: </p>
+        <p id="maxHealth">Max Health: </p>
+    </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -82,10 +98,17 @@
         const menu = document.getElementById('menu');
         const inventoryDiv = document.getElementById('inventory');
         const optionButtons = [document.getElementById('option1'), document.getElementById('option2'), document.getElementById('option3')];
+        const stats = {
+            hp: document.getElementById('hp'),
+            score: document.getElementById('score'),
+            bulletAttack: document.getElementById('bulletAttack'),
+            vulcanAttack: document.getElementById('vulcanAttack'),
+            maxHealth: document.getElementById('maxHealth')
+        };
 
         const weapons = [
             { name: 'Gun', image: 'gun.png', upgrade: 1 },
-            { name: 'Vulcan', image: 'assets/vulcan.png', upgrade: 2 },
+            { name: 'Vulcan', image: 'vulcan.png', upgrade: 2 },
             { name: 'Sword', image: 'sword.png', upgrade: 3 },
             { name: 'Rifle', image: 'rifle.png', upgrade: 4 },
             { name: 'Sniper Gun', image: 'sniper.png', upgrade: 5 },
@@ -202,7 +225,7 @@
                 const closestEnemy = this.findClosestEnemy();
                 if (closestEnemy) {
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'assets/bullet.png', angle));
+                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
                 }
             }
 
@@ -212,30 +235,40 @@
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
                     for (let i = 0; i < 6; i++) {
                         const spreadAngle = angle + (i - 3) * 0.1;
-                        bullets.push(new Bullet(this.x, this.y, 5, 7, 'assets/bullet.png', spreadAngle));
+                        bullets.push(new Bullet(this.x, this.y, 5, 10, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
                     }
                 }
             }
 
             findClosestEnemy() {
-                let closest = null;
-                let minDist = Infinity;
+                let closestEnemy = null;
+                let closestDistance = Infinity;
                 enemies.forEach(enemy => {
-                    const dx = enemy.x - this.x;
-                    const dy = enemy.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < minDist) {
-                        closest = enemy;
-                        minDist = dist;
+                    const distance = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestEnemy = enemy;
                     }
                 });
-                return closest;
+                return closestEnemy;
+            }
+
+            draw(offsetX, offsetY) {
+                super.draw(offsetX, offsetY);
+                if (this.weaponSprite) {
+                    ctx.drawImage(this.weaponSprite, this.x - this.radius - offsetX, this.y - this.radius - offsetY, this.radius * 2, this.radius * 2);
+                }
             }
 
             addScore(points) {
                 this.score += points;
-                const levels = [10, 50, 100, 200, 500, 1000];
-                if (levels.includes(this.score) || (this.score > 1000 && this.score % 500 === 0)) {
+                this.checkLevelUp();
+                updateStats();
+            }
+
+            checkLevelUp() {
+                const thresholds = [10, 50, 100, 200, 500, 1000];
+                if (thresholds.includes(this.score)) {
                     showLevelUpMenu();
                 }
             }
@@ -243,8 +276,8 @@
             addWeapon(weapon) {
                 if (this.inventory.length < 6) {
                     this.inventory.push(weapon);
-                    updateInventory();
                 }
+                updateInventory();
             }
 
             enhanceWeapon(weaponName) {
@@ -291,6 +324,17 @@
                 if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
                     this.angle += Math.PI;
                 }
+                const dx = player.x - this.x;
+                const dy = player.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < player.radius + this.radius) {
+                    player.hp -= 1;
+                    if (player.hp <= 0) {
+                        player.hp = 0;
+                        alert('Game Over');
+                        window.location.reload();
+                    }
+                }
             }
         }
 
@@ -332,19 +376,19 @@
             {
                 name: 'Forest',
                 background: '#006400',
-                enemySprite: 'assets/enemy1.png',
+                enemySprite: 'https://opengameart.org/sites/default/files/forest_enemy.png',
                 enemyHp: 3
             },
             {
                 name: 'Desert',
                 background: '#deaa00',
-                enemySprite: 'assets/enemy2.png',
+                enemySprite: 'https://opengameart.org/sites/default/files/desert_enemy.png',
                 enemyHp: 5
             },
             {
                 name: 'Snow',
                 background: '#87ceeb',
-                enemySprite: 'assets/enemy3.png',
+                enemySprite: 'https://opengameart.org/sites/default/files/snow_enemy.png',
                 enemyHp: 4
             }
         ];
@@ -408,9 +452,10 @@
         }
 
         function initGame() {
-            player = new Player(canvas.width / 2, canvas.height / 2, 30, 3, 'assets/mecha.png', 10);
+            player = new Player(canvas.width / 2, canvas.height / 2, 30, 3, 'https://opengameart.org/sites/default/files/robot_0.png', 10);
             player.addWeapon(weapons[0]); // Starting weapon: Gun
             updateInventory();
+            spawnEnemies();
         }
 
         function updateInventory() {
@@ -423,6 +468,21 @@
                 slot.appendChild(img);
                 inventoryDiv.appendChild(slot);
             });
+        }
+
+        function updateStats() {
+            stats.hp.textContent = `HP: ${player.hp}`;
+            stats.score.textContent = `Score: ${player.score}`;
+            stats.bulletAttack.textContent = `Bullet Attack: ${player.bulletAttack}`;
+            stats.vulcanAttack.textContent = `Vulcan Attack: ${player.vulcanAttack}`;
+            stats.maxHealth.textContent = `Max Health: ${player.maxHealth}`;
+        }
+
+        function spawnEnemies() {
+            setInterval(() => {
+                const map = maps[Math.floor(Math.random() * maps.length)];
+                enemies.push(new Enemy(Math.random() * canvas.width, Math.random() * canvas.height, 20, 1, map.enemySprite, map.enemyHp));
+            }, 3000); // Spawn a new enemy every 3 seconds
         }
 
         function animate() {
@@ -453,6 +513,8 @@
                 }
             });
 
+            updateStats();
+
             if (player.hp > 0) {
                 animationFrameId = requestAnimationFrame(animate);
             } else {
@@ -472,7 +534,7 @@
             keys[e.key] = false;
         });
 
-        let animationFrameId;
+        updateStats();
     </script>
 </body>
 </html>
