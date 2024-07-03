@@ -5,8 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vampire Survivors Clone</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        #menu {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+
+        #menu button, #menu select {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        #gameCanvas {
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    <div id="menu">
+        <h1>Vampire Survivors Clone</h1>
+        <button id="startButton">Start Game</button>
+        <label for="levelSelect">Select Level:</label>
+        <select id="levelSelect">
+            <option value="1">Level 1</option>
+            <option value="2">Level 2</option>
+            <option value="3">Level 3</option>
+            <option value="4">Level 4</option>
+            <option value="5">Level 5</option>
+        </select>
+        <label for="characterSelect">Select Character:</label>
+        <select id="characterSelect">
+            <option value="mecha">Mecha</option>
+        </select>
+    </div>
     <canvas id="gameCanvas"></canvas>
     <script src="game.js"></script>
 </body>
