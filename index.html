@@ -108,7 +108,7 @@
 
         const weapons = [
             { name: 'Gun', image: 'gun.png', upgrade: 1 },
-            { name: 'Vulcan', image: 'vulcan.png', upgrade: 2 },
+            { name: 'Vulcan', image: 'assets/vulcan.png', upgrade: 2 },
             { name: 'Sword', image: 'sword.png', upgrade: 3 },
             { name: 'Rifle', image: 'rifle.png', upgrade: 4 },
             { name: 'Sniper Gun', image: 'sniper.png', upgrade: 5 },
@@ -225,7 +225,7 @@
                 const closestEnemy = this.findClosestEnemy();
                 if (closestEnemy) {
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'https://opengameart.org/sites/default/files/bullet_8.png', angle));
+                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'assets/bullet.png', angle));
                 }
             }
 
@@ -235,7 +235,7 @@
                     const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
                     for (let i = 0; i < 6; i++) {
                         const spreadAngle = angle + (i - 3) * 0.1;
-                        bullets.push(new Bullet(this.x, this.y, 5, 10, 'https://opengameart.org/sites/default/files/bullet_8.png', spreadAngle));
+                        bullets.push(new Bullet(this.x, this.y, 5, 10, 'assets/bullet.png', spreadAngle));
                     }
                 }
             }
@@ -376,19 +376,19 @@
             {
                 name: 'Forest',
                 background: '#006400',
-                enemySprite: 'https://opengameart.org/sites/default/files/forest_enemy.png',
+                enemySprite: 'assets/enemy1.png',
                 enemyHp: 3
             },
             {
                 name: 'Desert',
                 background: '#deaa00',
-                enemySprite: 'https://opengameart.org/sites/default/files/desert_enemy.png',
+                enemySprite: 'assets/enemy2.png',
                 enemyHp: 5
             },
             {
                 name: 'Snow',
                 background: '#87ceeb',
-                enemySprite: 'https://opengameart.org/sites/default/files/snow_enemy.png',
+                enemySprite: 'assets/enemy3.png',
                 enemyHp: 4
             }
         ];
@@ -452,7 +452,7 @@
         }
 
         function initGame() {
-            player = new Player(canvas.width / 2, canvas.height / 2, 30, 3, 'https://opengameart.org/sites/default/files/robot_0.png', 10);
+            player = new Player(canvas.width / 2, canvas.height / 2, 30, 3, 'assets/mecha.png', 10);
             player.addWeapon(weapons[0]); // Starting weapon: Gun
             updateInventory();
             spawnEnemies();
