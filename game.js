@@ -186,7 +186,7 @@ function spawnEnemy() {
     const y = Math.random() * canvas.height;
     const radius = 20;
     const speed = 2;
-    const sprite = 'enemy.png';
+    const sprite = 'assets/enemy.png';
     const hp = 10;
     enemies.push(new Enemy(x, y, radius, speed, sprite, hp));
 }
