@@ -3,159 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game</title>
+    <title>Game Clone</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-            background: #e0e0e0;
-        }
-        .menu {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            display: none;
-        }
-        .menu.active {
-            display: block;
-        }
-        #inventory {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            display: flex;
-            gap: 10px;
-        }
-        .inventory-slot {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #fff;
-        }
-        .inventory-slot img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        #stats {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-        }
+        /* Your styles here */
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="startMenu" class="menu active">
-        <h2>Welcome to the Game</h2>
-        <button id="startButton">Start Game</button>
-    </div>
-    <div id="characterMenu" class="menu">
-        <h2>Select Your Character</h2>
-        <button id="characterMecha">Mecha (Default)</button>
-    </div>
-    <div id="mapMenu" class="menu">
-        <h2>Select a Map</h2>
-        <div id="mapButtons"></div>
-    </div>
-    <div id="menu" class="menu">
-        <h2>Choose an Option</h2>
-        <button id="option1"></button>
-        <button id="option2"></button>
-        <button id="option3"></button>
-    </div>
-    <div id="inventory">
-        <!-- Inventory slots -->
-    </div>
     <div id="stats">
-        <h3>Stats</h3>
-        <p id="hp">HP: </p>
-        <p id="score">Score: </p>
-        <p id="bulletAttack">Bullet Attack: </p>
-        <p id="vulcanAttack">Vulcan Attack: </p>
-        <p id="maxHealth">Max Health: </p>
+        <div id="hp"></div>
+        <div id="score"></div>
+        <div id="bulletAttack"></div>
+        <div id="vulcanAttack"></div>
+        <div id="maxHealth"></div>
+    </div>
+    <div id="inventory"></div>
+    <div id="levelUpMenu" class="menu">
+        <button class="optionButton"></button>
+        <button class="optionButton"></button>
+        <button class="optionButton"></button>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const startMenu = document.getElementById('startMenu');
-        const characterMenu = document.getElementById('characterMenu');
-        const mapMenu = document.getElementById('mapMenu');
-        const mapButtons = document.getElementById('mapButtons');
-        const menu = document.getElementById('menu');
+        const statsDiv = document.getElementById('stats');
         const inventoryDiv = document.getElementById('inventory');
-        const optionButtons = [document.getElementById('option1'), document.getElementById('option2'), document.getElementById('option3')];
-        const stats = {
-            hp: document.getElementById('hp'),
-            score: document.getElementById('score'),
-            bulletAttack: document.getElementById('bulletAttack'),
-            vulcanAttack: document.getElementById('vulcanAttack'),
-            maxHealth: document.getElementById('maxHealth')
-        };
-
-        const weapons = [
-            { name: 'Gun', image: 'gun.png', upgrade: 1 },
-            { name: 'Vulcan', image: 'assets/vulcan.png', upgrade: 2 },
-            { name: 'Sword', image: 'sword.png', upgrade: 3 },
-            { name: 'Rifle', image: 'rifle.png', upgrade: 4 },
-            { name: 'Sniper Gun', image: 'sniper.png', upgrade: 5 },
-            { name: 'Bomb', image: 'bomb.png', upgrade: 3 },
-            { name: 'Laser', image: 'laser.png', upgrade: 6 },
-            { name: 'Armor', image: 'armor.png', upgrade: 0 },
-            { name: 'Boots', image: 'boots.png', upgrade: 0 },
-            { name: 'Helmet', image: 'helmet.png', upgrade: 0 }
-        ];
-
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
-                this.color = color;
-                this.radius = 2;
-                this.alpha = 1;
-                this.velocity = {
-                    x: (Math.random() - 0.5) * 2,
-                    y: (Math.random() - 0.5) * 2
-                };
-                this.gravity = 0.1;
-                this.friction = 0.98;
-                this.lifespan = 100;
-            }
-
-            update() {
-                this.velocity.x *= this.friction;
-                this.velocity.y *= this.friction;
-                this.velocity.y += this.gravity;
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.alpha -= 0.01;
-                this.lifespan--;
-            }
-
-            draw(offsetX, offsetY) {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x - offsetX, this.y - offsetY, this.radius, 0, Math.PI * 2, false);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-            }
-        }
+        const levelUpMenu = document.getElementById('levelUpMenu');
+        const optionButtons = document.querySelectorAll('.optionButton');
 
         class Entity {
             constructor(x, y, radius, speed, sprite) {
@@ -167,7 +41,7 @@
                 this.sprite.src = sprite;
             }
 
-            draw(offsetX, offsetY) {
+            draw(offsetX = 0, offsetY = 0) {
                 ctx.drawImage(this.sprite, this.x - this.radius - offsetX, this.y - this.radius - offsetY, this.radius * 2, this.radius * 2);
             }
         }
@@ -176,66 +50,35 @@
             constructor(x, y, radius, speed, sprite, hp) {
                 super(x, y, radius, speed, sprite);
                 this.hp = hp;
-                this.basicCooldown = 0;
-                this.vulcanCooldown = 0;
-                this.vulcanFiring = false;
-                this.vulcanFireDuration = 0;
+                this.maxHealth = hp;
                 this.score = 0;
                 this.bulletAttack = 1;
                 this.vulcanAttack = 1;
-                this.maxHealth = 10;
-                this.weaponSprite = null;
-                this.hasVulcan = false;
-                this.upgradeHistory = {
-                    bullet: 0,
-                    vulcan: 0,
-                    health: 0
-                };
                 this.inventory = [];
+                this.upgradeHistory = { bullet: 0, health: 0, vulcan: 0 };
+                this.weapon = weapons[0]; // Starting weapon: Gun
+                this.vulcanCooldown = 0;
             }
 
             move(keys) {
-                if (keys['ArrowUp']) this.y -= this.speed;
-                if (keys['ArrowDown']) this.y += this.speed;
-                if (keys['ArrowLeft']) this.x -= this.speed;
-                if (keys['ArrowRight']) this.x += this.speed;
+                if (keys['w']) this.y -= this.speed;
+                if (keys['a']) this.x -= this.speed;
+                if (keys['s']) this.y += this.speed;
+                if (keys['d']) this.x += this.speed;
+
+                // Ensure player stays within bounds
+                this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
             }
 
             shoot() {
-                if (this.basicCooldown === 0) {
-                    this.shootBasic();
-                    this.basicCooldown = 15;
-                }
-
-                if (this.vulcanFiring) {
-                    if (this.vulcanFireDuration > 0) {
-                        this.shootVulcan();
-                        this.vulcanFireDuration -= 1 / 60;
-                    } else {
-                        this.vulcanFiring = false;
-                        this.vulcanCooldown = 10;
-                    }
-                }
-
-                if (this.basicCooldown > 0) this.basicCooldown--;
-                if (this.vulcanCooldown > 0) this.vulcanCooldown -= 1 / 60;
-            }
-
-            shootBasic() {
-                const closestEnemy = this.findClosestEnemy();
-                if (closestEnemy) {
-                    const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                    bullets.push(new Bullet(this.x, this.y, 5, 7, 'assets/bullet.png', angle));
-                }
-            }
-
-            shootVulcan() {
-                const closestEnemy = this.findClosestEnemy();
-                if (closestEnemy) {
-                    const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                    for (let i = 0; i < 6; i++) {
-                        const spreadAngle = angle + (i - 3) * 0.1;
-                        bullets.push(new Bullet(this.x, this.y, 5, 10, 'assets/bullet.png', spreadAngle));
+                const now = Date.now();
+                if (!this.lastShootTime || now - this.lastShootTime >= this.weapon.fireRate) {
+                    this.lastShootTime = now;
+                    const closestEnemy = this.findClosestEnemy();
+                    if (closestEnemy) {
+                        const angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                        bullets.push(new Bullet(this.x, this.y, 5, 10, 'assets/bullet.png', angle));
                     }
                 }
             }
@@ -251,13 +94,6 @@
                     }
                 });
                 return closestEnemy;
-            }
-
-            draw(offsetX, offsetY) {
-                super.draw(offsetX, offsetY);
-                if (this.weaponSprite) {
-                    ctx.drawImage(this.weaponSprite, this.x - this.radius - offsetX, this.y - this.radius - offsetY, this.radius * 2, this.radius * 2);
-                }
             }
 
             addScore(points) {
@@ -286,28 +122,6 @@
                     weapon.upgrade += 1;
                 }
                 updateInventory();
-            }
-
-            enhanceBulletAttack() {
-                this.bulletAttack++;
-                this.upgradeHistory.bullet++;
-            }
-
-            enhanceMaxHealth() {
-                this.maxHealth += 5;
-                this.upgradeHistory.health++;
-            }
-
-            unlockVulcan() {
-                this.hasVulcan = true;
-                this.upgradeHistory.vulcan++;
-            }
-
-            startVulcanFire() {
-                if (this.hasVulcan && this.vulcanCooldown <= 0) {
-                    this.vulcanFiring = true;
-                    this.vulcanFireDuration = 2;
-                }
             }
         }
 
@@ -355,10 +169,9 @@
 
                     if (distance < enemy.radius + this.radius) {
                         enemy.hp -= player.bulletAttack;
-                        particles.push(new Particle(enemy.x, enemy.y, '#ff0000'));
                         if (enemy.hp <= 0) {
                             enemies.splice(index, 1);
-                            player.addScore(100);
+                            player.addScore(10); // Adjust score points per enemy
                         }
                     }
                 });
@@ -372,66 +185,28 @@
         let player;
         let offsetX = 0;
         let offsetY = 0;
-        const maps = [
-            {
-                name: 'Forest',
-                background: '#006400',
-                enemySprite: 'assets/enemy1.png',
-                enemyHp: 3
-            },
-            {
-                name: 'Desert',
-                background: '#deaa00',
-                enemySprite: 'assets/enemy2.png',
-                enemyHp: 5
-            },
-            {
-                name: 'Snow',
-                background: '#87ceeb',
-                enemySprite: 'assets/enemy3.png',
-                enemyHp: 4
-            }
+        let animationFrameId;
+
+        const weapons = [
+            { name: 'Gun', fireRate: 500, image: 'https://opengameart.org/sites/default/files/gun.png', upgrade: 0 },
+            { name: 'Vulcan', fireRate: 200, image: 'assets/vulcan.png', upgrade: 0 },
+            { name: 'Sword', fireRate: 1000, image: 'https://opengameart.org/sites/default/files/sword.png', upgrade: 0 },
+            { name: 'Rifle', fireRate: 600, image: 'https://opengameart.org/sites/default/files/rifle.png', upgrade: 0 },
+            { name: 'Sniper', fireRate: 1200, image: 'https://opengameart.org/sites/default/files/sniper.png', upgrade: 0 },
+            { name: 'Bomb', fireRate: 1500, image: 'https://opengameart.org/sites/default/files/bomb.png', upgrade: 0 },
+            { name: 'Laser', fireRate: 800, image: 'https://opengameart.org/sites/default/files/laser.png', upgrade: 0 },
+            { name: 'Armor', fireRate: 0, image: 'https://opengameart.org/sites/default/files/armor.png', upgrade: 0 },
+            { name: 'Boots', fireRate: 0, image: 'https://opengameart.org/sites/default/files/boots.png', upgrade: 0 },
+            { name: 'Helmet', fireRate: 0, image: 'https://opengameart.org/sites/default/files/helmet.png', upgrade: 0 },
         ];
-
-        document.getElementById('startButton').addEventListener('click', () => {
-            startMenu.classList.remove('active');
-            characterMenu.classList.add('active');
-        });
-
-        document.getElementById('characterMecha').addEventListener('click', () => {
-            characterMenu.classList.remove('active');
-            mapMenu.classList.add('active');
-        });
-
-        maps.forEach((map, index) => {
-            const button = document.createElement('button');
-            button.textContent = map.name;
-            button.addEventListener('click', () => {
-                selectMap(index);
-                mapMenu.classList.remove('active');
-                initGame();
-                animate();
-            });
-            mapButtons.appendChild(button);
-        });
-
-        function selectMap(index) {
-            const map = maps[index];
-            canvas.style.background = map.background;
-            for (let i = 0; i < 5; i++) {
-                enemies.push(new Enemy(Math.random() * canvas.width, Math.random() * canvas.height, 20, 1, map.enemySprite, map.enemyHp));
-            }
-        }
 
         function showLevelUpMenu() {
             const availableWeapons = weapons.filter(weapon => !player.inventory.some(item => item.name === weapon.name));
             const randomOptions = [];
-            while (randomOptions.length < 3) {
+            while (randomOptions.length < 3 && availableWeapons.length > 0) {
                 const randomIndex = Math.floor(Math.random() * availableWeapons.length);
-                const option = availableWeapons[randomIndex];
-                if (!randomOptions.includes(option)) {
-                    randomOptions.push(option);
-                }
+                const option = availableWeapons.splice(randomIndex, 1)[0];
+                randomOptions.push(option);
             }
 
             randomOptions.forEach((option, index) => {
@@ -442,50 +217,37 @@
                     } else {
                         player.addWeapon(option);
                     }
-                    menu.classList.remove('active');
-                    requestAnimationFrame(animate);
+                    levelUpMenu.style.display = 'none';
                 };
             });
 
-            menu.classList.add('active');
-            cancelAnimationFrame(animationFrameId);
-        }
-
-        function initGame() {
-            player = new Player(canvas.width / 2, canvas.height / 2, 30, 3, 'assets/mecha.png', 10);
-            player.addWeapon(weapons[0]); // Starting weapon: Gun
-            updateInventory();
-            spawnEnemies();
-        }
-
-        function updateInventory() {
-            inventoryDiv.innerHTML = '';
-            player.inventory.forEach(item => {
-                const slot = document.createElement('div');
-                slot.classList.add('inventory-slot');
-                const img = document.createElement('img');
-                img.src = item.image;
-                slot.appendChild(img);
-                inventoryDiv.appendChild(slot);
-            });
+            levelUpMenu.style.display = 'block';
         }
 
         function updateStats() {
-            stats.hp.textContent = `HP: ${player.hp}`;
-            stats.score.textContent = `Score: ${player.score}`;
-            stats.bulletAttack.textContent = `Bullet Attack: ${player.bulletAttack}`;
-            stats.vulcanAttack.textContent = `Vulcan Attack: ${player.vulcanAttack}`;
-            stats.maxHealth.textContent = `Max Health: ${player.maxHealth}`;
+            statsDiv.innerHTML = `
+                <div>HP: ${player.hp}/${player.maxHealth}</div>
+                <div>Score: ${player.score}</div>
+                <div>Bullet Attack: ${player.bulletAttack}</div>
+                <div>Vulcan Attack: ${player.vulcanAttack}</div>
+            `;
+        }
+
+        function updateInventory() {
+            inventoryDiv.innerHTML = player.inventory.map(item => `<div>${item.name} (Level ${item.upgrade + 1})</div>`).join('');
         }
 
         function spawnEnemies() {
+            const spawnInterval = 3000; // Adjust spawn rate as needed
             setInterval(() => {
-                const map = maps[Math.floor(Math.random() * maps.length)];
-                enemies.push(new Enemy(Math.random() * canvas.width, Math.random() * canvas.height, 20, 1, map.enemySprite, map.enemyHp));
-            }, 3000); // Spawn a new enemy every 3 seconds
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const enemy = new Enemy(x, y, 15, 1, 'assets/enemy1.png', 10);
+                enemies.push(enemy);
+            }, spawnInterval);
         }
 
-        function animate() {
+        function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             player.move(keys);
@@ -495,46 +257,33 @@
             bullets.forEach((bullet, index) => {
                 bullet.update();
                 bullet.draw(offsetX, offsetY);
-                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
-                    bullets.splice(index, 1);
-                }
             });
 
-            enemies.forEach((enemy, index) => {
+            enemies.forEach(enemy => {
                 enemy.update();
                 enemy.draw(offsetX, offsetY);
             });
 
-            particles.forEach((particle, index) => {
-                particle.update();
-                particle.draw(offsetX, offsetY);
-                if (particle.lifespan <= 0) {
-                    particles.splice(index, 1);
-                }
-            });
-
             updateStats();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
 
-            if (player.hp > 0) {
-                animationFrameId = requestAnimationFrame(animate);
-            } else {
-                alert('Game Over');
-                window.location.reload();
-            }
+        function init() {
+            player = new Player(canvas.width / 2, canvas.height / 2, 20, 3, 'assets/mecha.png', 100);
+            spawnEnemies();
+            updateStats();
+            gameLoop();
         }
 
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
-            if (e.key === ' ') {
-                player.startVulcanFire();
-            }
         });
 
         window.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
 
-        updateStats();
+        init();
     </script>
 </body>
 </html>
