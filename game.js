@@ -44,7 +44,7 @@ startButton.addEventListener('click', () => {
 });
 
 character1.addEventListener('click', () => {
-    player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'mecha.png', 10);
+    player = new Player(canvas.width / 2, canvas.height / 2, 15, 5, 'assets/mecha.png', 10);
     characterMenu.classList.remove('active');
     mapMenu.classList.add('active');
     setupMapOptions();
