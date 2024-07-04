@@ -198,6 +198,7 @@ function spawnEnemy() {
 
 function checkCollisions() {
     enemies.forEach((enemy, enemyIndex) => {
+        // Check collision between bullets and enemies
         bullets.forEach((bullet, bulletIndex) => {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= bullet.attack;
@@ -217,8 +218,9 @@ function checkCollisions() {
             }
         });
 
+        // Check collision between player and enemies
         if (!enemy.vanishing && isColliding(player, enemy)) {
-            player.hp -= 10;
+            applyPlayerDamage(10); // Apply damage to the player
             startVanishing(enemy);
         }
     });
@@ -235,6 +237,16 @@ function checkCollisions() {
         }
     });
 }
+
+function applyPlayerDamage(amount) {
+    if (player.damageCooldown) return; // Prevent multiple damage applications in quick succession
+    player.hp -= amount;
+    player.damageCooldown = true;
+    setTimeout(() => {
+        player.damageCooldown = false;
+    }, 100); // 
+}
+
 
 function isColliding(rect1, rect2) {
     return rect1.x < rect2.x + rect2.size &&
