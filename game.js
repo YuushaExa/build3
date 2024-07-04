@@ -69,7 +69,8 @@ let player = {
     weapon: null,
     exp: 0,
     level: 1,
-    expToNextLevel: 10
+    expToNextLevel: 10,
+    damageCooldown: false // Initialize cooldown status
 };
 
 const enemies = [];
