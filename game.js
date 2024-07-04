@@ -10,12 +10,12 @@ const mapHeight = 100;
 
 const characters = {
     mecha: {
-        speed: 5,
+        speed: 1,
         hp: 100,
         weapon: "Gun"
     },
     cyborg: {
-        speed: 5,
+        speed: 1,
         hp: 100,
         weapon: "Shotgun"
     }
