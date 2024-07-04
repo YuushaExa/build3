@@ -198,8 +198,37 @@ function updateExplosions() {
 
 function spawnEnemy() {
     const size = 20;
-    const x = Math.random() * (canvas.width + offsetX - size);
-    const y = Math.random() * (canvas.height + offsetY - size);
+    
+    // Determine spawn area outside the canvas edges
+    const spawnArea = Math.max(canvas.width, canvas.height) * 1.5; // Adjust multiplier as needed
+    
+    // Randomly choose a side to spawn the enemy
+    const side = Math.floor(Math.random() * 4); // 0 = top, 1 = right, 2 = bottom, 3 = left
+    
+    let x, y;
+    
+    // Calculate initial position based on chosen side
+    switch (side) {
+        case 0: // Top
+            x = Math.random() * (canvas.width + offsetX - size);
+            y = -size - Math.random() * spawnArea;
+            break;
+        case 1: // Right
+            x = canvas.width + Math.random() * spawnArea;
+            y = Math.random() * (canvas.height + offsetY - size);
+            break;
+        case 2: // Bottom
+            x = Math.random() * (canvas.width + offsetX - size);
+            y = canvas.height + Math.random() * spawnArea;
+            break;
+        case 3: // Left
+            x = -size - Math.random() * spawnArea;
+            y = Math.random() * (canvas.height + offsetY - size);
+            break;
+        default:
+            break;
+    }
+    
     enemies.push({
         x,
         y,
@@ -240,10 +269,9 @@ function checkCollisions() {
         });
 
         // Check collision between player and enemies
-        if (!enemy.vanishing && isColliding(player, enemy)) {
-            applyPlayerDamage(10); // Apply damage to the player
-            startVanishing(enemy);
-        }
+      if (isColliding(player, enemy)) {
+    applyPlayerDamage(10); // Apply damage to the player immediately
+}
     });
 
     // Check collision between player and EXP points
@@ -266,7 +294,7 @@ function applyPlayerDamage(amount) {
     player.damageCooldown = true;
     setTimeout(() => {
         player.damageCooldown = false;
-    }, 1000); // 1 second cooldown between damage applications
+    }, 100); // 1 second cooldown between damage applications
 }
 
 function isColliding(rect1, rect2) {
