@@ -4,7 +4,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 600;
 
-const tileSize = 300;
+const tileSize = 36;
 const mapWidth = 100;
 const mapHeight = 100;
 
