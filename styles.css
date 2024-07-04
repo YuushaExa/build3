@@ -1,12 +1,21 @@
 body {
     margin: 0;
+    padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #000;
 }
 
-canvas {
-    border: 1px solid #fff;
+#menu {
+    text-align: center;
+}
+
+#gameCanvas {
+    display: block;
+    margin: 0 auto;
+    background: #000;
 }
