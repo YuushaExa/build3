@@ -15,7 +15,7 @@ let player = {
     speed: 0,
     dx: 0,
     dy: 0,
-    hp: 0,
+    hp: 100,
     weapon: null,
     exp: 0,
     level: 1,
