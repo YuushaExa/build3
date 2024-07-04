@@ -1,4 +1,4 @@
-window.onload = function(){
+window.onload = function() {
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -88,6 +88,7 @@ let score = 0;
 let offsetX = 0;
 let offsetY = 0;
 let gameStarted = false;
+let playerType = '';
 
 function drawPlayer() {
     ctx.fillStyle = 'blue';
@@ -381,29 +382,7 @@ function gameLoop() {
         ctx.fillStyle = 'white';
         ctx.fillText('Cyborg', canvas.width / 2 + 80, canvas.height / 2 + 30);
 
-        canvas.addEventListener('click', function (event) {
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-
-            if (x >= canvas.width / 2 - 150 && x <= canvas.width / 2 - 50 && y >= canvas.height / 2 && y <= canvas.height / 2 + 50) {
-                playerType = 'mecha';
-                player.speed = characters.mecha.speed;
-                player.hp = characters.mecha.hp;
-                player.weapon = weapons[characters.mecha.weapon];
-                gameStarted = true;
-                startGame();
-            }
-
-            if (x >= canvas.width / 2 + 50 && x <= canvas.width / 2 + 150 && y >= canvas.height / 2 && y <= canvas.height / 2 + 50) {
-                playerType = 'cyborg';
-                player.speed = characters.cyborg.speed;
-                player.hp = characters.cyborg.hp;
-                player.weapon = weapons[characters.cyborg.weapon];
-                gameStarted = true;
-                startGame();
-            }
-        });
+        canvas.addEventListener('click', handleCharacterSelection);
     } else {
         updatePlayerPosition();
         moveEnemies();
@@ -421,6 +400,32 @@ function gameLoop() {
     }
 
     requestAnimationFrame(gameLoop);
+}
+
+function handleCharacterSelection(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (x >= canvas.width / 2 - 150 && x <= canvas.width / 2 - 50 && y >= canvas.height / 2 && y <= canvas.height / 2 + 50) {
+        playerType = 'mecha';
+        player.speed = characters.mecha.speed;
+        player.hp = characters.mecha.hp;
+        player.weapon = weapons[characters.mecha.weapon];
+        gameStarted = true;
+        startGame();
+        canvas.removeEventListener('click', handleCharacterSelection);
+    }
+
+    if (x >= canvas.width / 2 + 50 && x <= canvas.width / 2 + 150 && y >= canvas.height / 2 && y <= canvas.height / 2 + 50) {
+        playerType = 'cyborg';
+        player.speed = characters.cyborg.speed;
+        player.hp = characters.cyborg.hp;
+        player.weapon = weapons[characters.cyborg.weapon];
+        gameStarted = true;
+        startGame();
+        canvas.removeEventListener('click', handleCharacterSelection);
+    }
 }
 
 function startGame() {
