@@ -1,4 +1,4 @@
-window.onload = function() {
+window.onload = function(){
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -72,7 +72,7 @@ let player = {
     exp: 0,
     level: 1,
     expToNextLevel: 10,
-    damageCooldown: false
+    damageCooldown: false // Initialize cooldown status
 };
 
 
@@ -80,15 +80,13 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
-const goldDrops = [];
-const damageTexts = [];
+const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
 let offsetX = 0;
 let offsetY = 0;
 let gameStarted = false;
-let playerType = '';
 
 function drawPlayer() {
     ctx.fillStyle = 'blue';
@@ -98,7 +96,7 @@ function drawPlayer() {
 function drawEnemies() {
     enemies.forEach(enemy => {
         if (enemy.vanishing) {
-            ctx.fillStyle = `rgba(255, 0, 0, ${enemy.alpha})`;
+            ctx.fillStyle = rgba(255, 0, 0, ${enemy.alpha});
             ctx.beginPath();
             ctx.arc(enemy.x - offsetX, enemy.y - offsetY, enemy.size / 2 * enemy.alpha, 0, Math.PI * 2);
             ctx.fill();
@@ -117,7 +115,7 @@ function drawBullets() {
 }
 
 function drawExplosions() {
-    ctx.fillStyle = 'rgba(255, 165, 0, 0.5)';
+    ctx.fillStyle = rgba(255, 165, 0, 0.5);
     explosions.forEach(explosion => {
         ctx.beginPath();
         ctx.arc(explosion.x - offsetX, explosion.y - offsetY, explosion.radius, 0, Math.PI * 2);
@@ -129,13 +127,6 @@ function drawExpPoints() {
     ctx.fillStyle = 'blue';
     expPoints.forEach(exp => {
         ctx.fillRect(exp.x - offsetX, exp.y - offsetY, exp.size, exp.size);
-    });
-}
-
-function drawGoldDrops() {
-    ctx.fillStyle = 'gold';
-    goldDrops.forEach(gold => {
-        ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
     });
 }
 
@@ -151,6 +142,24 @@ function drawDamageTexts() {
     });
 }
 
+const goldPoints = [];
+let player = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    size: 20,
+    speed: 0,
+    dx: 0,
+    dy: 0,
+    hp: 0,
+    weapon: null,
+    exp: 0,
+    level: 1,
+    expToNextLevel: 10,
+    damageCooldown: false, // Initialize cooldown status
+    gold: 0 // Initialize gold
+};
+
+    
 function updatePlayerPosition() {
     player.x += player.dx;
     player.y += player.dy;
@@ -210,26 +219,29 @@ function updateExplosions() {
 function spawnEnemy() {
     const size = 20;
     
-    const spawnArea = Math.max(canvas.width, canvas.height) * 1.5;
+    // Determine spawn area outside the canvas edges
+    const spawnArea = Math.max(canvas.width, canvas.height) * 1.5; // Adjust multiplier as needed
     
-    const side = Math.floor(Math.random() * 4);
+    // Randomly choose a side to spawn the enemy
+    const side = Math.floor(Math.random() * 4); // 0 = top, 1 = right, 2 = bottom, 3 = left
     
     let x, y;
     
+    // Calculate initial position based on chosen side
     switch (side) {
-        case 0: 
+        case 0: // Top
             x = Math.random() * (canvas.width + offsetX - size);
             y = -size - Math.random() * spawnArea;
             break;
-        case 1: 
+        case 1: // Right
             x = canvas.width + Math.random() * spawnArea;
             y = Math.random() * (canvas.height + offsetY - size);
             break;
-        case 2: 
+        case 2: // Bottom
             x = Math.random() * (canvas.width + offsetX - size);
             y = canvas.height + Math.random() * spawnArea;
             break;
-        case 3: 
+        case 3: // Left
             x = -size - Math.random() * spawnArea;
             y = Math.random() * (canvas.height + offsetY - size);
             break;
@@ -250,6 +262,7 @@ function spawnEnemy() {
 
 function checkCollisions() {
     enemies.forEach((enemy, enemyIndex) => {
+        // Check collision between bullets and enemies
         bullets.forEach((bullet, bulletIndex) => {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= bullet.attack;
@@ -270,21 +283,25 @@ function checkCollisions() {
                 if (enemy.hp <= 0 && !enemy.vanishing) {
                     startVanishing(enemy);
                     score++;
-                    if (Math.random() < 0.3) { // 30% chance to drop EXP
+                    // Drop experience with a 30% chance
+                    if (Math.random() < 0.3) {
                         expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
                     }
-                    if (Math.random() < 0.1) { // 10% chance to drop gold
-                        goldDrops.push({ x: enemy.x, y: enemy.y, size: 5 });
+                    // Drop gold with a 10% chance
+                    if (Math.random() < 0.1) {
+                        goldPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
                     }
                 }
             }
         });
 
+        // Check collision between player and enemies
         if (isColliding(player, enemy)) {
-            applyPlayerDamage(10);
+            applyPlayerDamage(10); // Apply damage to the player immediately
         }
     });
 
+    // Check collision between player and EXP points
     expPoints.forEach((exp, expIndex) => {
         if (Math.hypot(exp.x - (player.x + offsetX), exp.y - (player.y + offsetY)) < 20) {
             player.exp++;
@@ -292,145 +309,205 @@ function checkCollisions() {
             if (player.exp >= player.expToNextLevel) {
                 player.level++;
                 player.exp = 0;
-                player.expToNextLevel += Math.floor(player.expToNextLevel * 1.5);
-                alert('Level Up!');
+                player.expToNextLevel = Math.ceil(player.expToNextLevel * 1.5);
             }
         }
     });
 
-    goldDrops.forEach((gold, goldIndex) => {
+    // Check collision between player and gold points
+    goldPoints.forEach((gold, goldIndex) => {
         if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
-            score += 10;
-            goldDrops.splice(goldIndex, 1);
+            player.gold++;
+            goldPoints.splice(goldIndex, 1);
         }
+    });
+}
+
+
+function applyPlayerDamage(amount) {
+    if (player.damageCooldown) return; // Prevent multiple damage applications in quick succession
+    player.hp -= amount;
+    player.damageCooldown = true;
+    setTimeout(() => {
+        player.damageCooldown = false;
+    }, 100); // 1 second cooldown between damage applications
+}
+
+function isColliding(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.size &&
+           rect1.x + rect1.size > rect2.x &&
+           rect1.y < rect2.y + rect2.size &&
+           rect1.y + rect1.size > rect2.y;
+}
+
+function drawScore() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Score: ${score}`, 10, 30);
+    ctx.fillText(`Gold: ${player.gold}`, 10, 50); // Display gold
+}
+
+
+function drawExpBar() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(Level: ${player.level}, 10, 60);
+    
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(10, 80, (canvas.width - 20) * (player.exp / player.expToNextLevel), 10);
+
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(10, 80, canvas.width - 20, 10);
+}
+
+function drawHP() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(HP: ${player.hp}, 10, 100);
+}
+
+function drawGoldPoints() {
+    ctx.fillStyle = 'gold';
+    goldPoints.forEach(gold => {
+        ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
+    });
+}
+
+    
+function generateTiles() {
+    for (let y = -1; y <= canvas.height / tileSize + 1; y++) {
+        for (let x = -1; x <= canvas.width / tileSize + 1; x++) {
+            const tileX = (x * tileSize - offsetX % tileSize) % (tileSize * mapWidth);
+            const tileY = (y * tileSize - offsetY % tileSize) % (tileSize * mapHeight);
+            ctx.fillStyle = ((x + y) % 2 === 0) ? '#555' : '#333';
+            ctx.fillRect(tileX, tileY, tileSize, tileSize);
+        }
+    }
+}
+
+function findClosestEnemy() {
+    let closestEnemy = null;
+    let closestDistance = Infinity;
+
+    enemies.forEach(enemy => {
+        const distance = Math.hypot(enemy.x - (player.x + offsetX), enemy.y - (player.y + offsetY));
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestEnemy = enemy;
+        }
+    });
+
+    return closestEnemy;
+}
+
+function shootClosestEnemy() {
+    const closestEnemy = findClosestEnemy();
+
+    if (closestEnemy && player.weapon) {
+        // Calculate enemy position relative to the visible canvas area
+        const enemyXInView = closestEnemy.x - offsetX;
+        const enemyYInView = closestEnemy.y - offsetY;
+
+        // Check if the enemy is within the visible canvas bounds
+        if (enemyXInView >= 0 && enemyXInView <= canvas.width &&
+            enemyYInView >= 0 && enemyYInView <= canvas.height) {
+            // If within bounds, calculate shooting angle and shoot
+            const angle = Math.atan2(enemyYInView - player.y, enemyXInView - player.x);
+            weapons[player.weapon].shoot(player.x + offsetX, player.y + offsetY, angle);
+        }
+    }
+}
+
+
+function createExplosion(x, y) {
+    explosions.push({
+        x: x,
+        y: y,
+        radius: 20,
+        alpha: 1
     });
 }
 
 function startVanishing(enemy) {
     enemy.vanishing = true;
-    const vanishingInterval = setInterval(() => {
-        enemy.alpha -= 0.1;
+    const vanishInterval = setInterval(() => {
+        enemy.alpha -= 0.05;
         if (enemy.alpha <= 0) {
+            clearInterval(vanishInterval);
             enemies.splice(enemies.indexOf(enemy), 1);
-            clearInterval(vanishingInterval);
         }
-    }, 100);
+    }, 50);
 }
 
-function isColliding(obj1, obj2) {
-    return (
-        obj1.x < obj2.x + obj2.size &&
-        obj1.x + obj1.size > obj2.x &&
-        obj1.y < obj2.y + obj2.size &&
-        obj1.y + obj1.size > obj2.y
-    );
-}
+function update() {
+    if (!gameStarted) return;
 
-function applyPlayerDamage(damage) {
-    if (!player.damageCooldown) {
-        player.hp -= damage;
-        damageTexts.push({
-            text: `-${damage}`,
-            x: player.x,
-            y: player.y,
-            lifetime: 60
-        });
-        if (player.hp <= 0) {
-            alert('Game Over!');
-            document.location.reload();
-        }
-        player.damageCooldown = true;
-        setTimeout(() => {
-            player.damageCooldown = false;
-        }, 1000);
-    }
-}
-
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowUp' || event.key === 'w') player.dy = -characters[playerType].speed;
-    if (event.key === 'ArrowDown' || event.key === 's') player.dy = characters[playerType].speed;
-    if (event.key === 'ArrowLeft' || event.key === 'a') player.dx = -characters[playerType].speed;
-    if (event.key === 'ArrowRight' || event.key === 'd') player.dx = characters[playerType].speed;
-    if (event.key === ' ') {
-        const angle = Math.atan2(event.clientY - canvas.height / 2, event.clientX - canvas.width / 2);
-        player.weapon.shoot(player.x + offsetX, player.y + offsetY, angle);
-    }
-});
-
-document.addEventListener('keyup', (event) => {
-    if (event.key === 'ArrowUp' || event.key === 'w') player.dy = 0;
-    if (event.key === 'ArrowDown' || event.key === 's') player.dy = 0;
-    if (event.key === 'ArrowLeft' || event.key === 'a') player.dx = 0;
-    if (event.key === 'ArrowRight' || event.key === 'd') player.dx = 0;
-});
-
-function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (!gameStarted) {
-        ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
-        ctx.fillText('Select Your Character:', canvas.width / 2 - 100, canvas.height / 2 - 50);
+    generateTiles();
+    drawPlayer();
+    drawEnemies();
+    drawBullets();
+    drawExplosions();
+    drawExpPoints();
+    drawGoldPoints(); // Draw gold points
+    drawDamageTexts();
+    drawScore();
+    drawExpBar();
+    drawHP();
 
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(canvas.width / 2 - 150, canvas.height / 2, 100, 50);
-        ctx.fillStyle = 'white';
-        ctx.fillText('Mecha', canvas.width / 2 - 120, canvas.height / 2 + 30);
+    updatePlayerPosition();
+    moveEnemies();
+    moveBullets();
+    updateExplosions();
+    checkCollisions();
 
-        ctx.fillStyle = 'green';
-        ctx.fillRect(canvas.width / 2 + 50, canvas.height / 2, 100, 50);
-        ctx.fillStyle = 'white';
-        ctx.fillText('Cyborg', canvas.width / 2 + 80, canvas.height / 2 + 30);
-
-        canvas.addEventListener('click', handleCharacterSelection);
-    } else {
-        updatePlayerPosition();
-        moveEnemies();
-        moveBullets();
-        updateExplosions();
-        checkCollisions();
-
-        drawPlayer();
-        drawEnemies();
-        drawBullets();
-        drawExplosions();
-        drawExpPoints();
-        drawGoldDrops();
-        drawDamageTexts();
-    }
-
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(update);
 }
 
-function handleCharacterSelection(event) {
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
 
-    if (x >= canvas.width / 2 - 150 && x <= canvas.width / 2 - 50 && y >= canvas.height / 2 && y <= canvas.height / 2 + 50) {
-        playerType = 'mecha';
-        player.speed = characters.mecha.speed;
-        player.hp = characters.mecha.hp;
-        player.weapon = weapons[characters.mecha.weapon];
-        gameStarted = true;
-        startGame();
-        canvas.removeEventListener('click', handleCharacterSelection);
-    }
-
-    if (x >= canvas.width / 2 + 50 && x <= canvas.width / 2 + 150 && y >= canvas.height / 2 && y <= canvas.height / 2 + 50) {
-        playerType = 'cyborg';
-        player.speed = characters.cyborg.speed;
-        player.hp = characters.cyborg.hp;
-        player.weapon = weapons[characters.cyborg.weapon];
-        gameStarted = true;
-        startGame();
-        canvas.removeEventListener('click', handleCharacterSelection);
+function keyDown(e) {
+    if (e.key === 'ArrowRight' || e.key === 'd') {
+        player.dx = player.speed;
+    } else if (e.key === 'ArrowLeft' || e.key === 'a') {
+        player.dx = -player.speed;
+    } else if (e.key === 'ArrowUp' || e.key === 'w') {
+        player.dy = -player.speed;
+    } else if (e.key === 'ArrowDown' || e.key === 's') {
+        player.dy = player.speed;
     }
 }
 
-function startGame() {
-    setInterval(spawnEnemy, 1000);
+function keyUp(e) {
+    if (
+        e.key === 'ArrowRight' || e.key === 'd' ||
+        e.key === 'ArrowLeft' || e.key === 'a' ||
+        e.key === 'ArrowUp' || e.key === 'w' ||
+        e.key === 'ArrowDown' || e.key === 's'
+    ) {
+        player.dx = 0;
+        player.dy = 0;
+    }
 }
 
-gameLoop();
-};
+document.addEventListener('keydown', keyDown);
+document.addEventListener('keyup', keyUp);
+
+setInterval(shootClosestEnemy, 1000);
+setInterval(spawnEnemy, 2000);
+
+document.getElementById('startButton').addEventListener('click', () => {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const characterData = characters[selectedCharacter];
+
+    player.speed = characterData.speed;
+    player.hp = characterData.hp;
+    player.weapon = characterData.weapon;
+
+    gameStarted = true;
+    document.getElementById('menu').style.display = 'none';
+    canvas.style.display = 'block';
+    update();
+});
+
+    };
