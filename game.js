@@ -67,7 +67,9 @@ let player = {
     dy: 0,
     hp: 0,
     weapon: null,
-    exp: 0
+    exp: 0,
+    level: 1,
+    expToNextLevel: 10
 };
 
 const enemies = [];
@@ -222,9 +224,14 @@ function checkCollisions() {
     });
 
     expPoints.forEach((exp, expIndex) => {
-        if (isColliding(player, exp)) {
+        if (Math.hypot(exp.x - (player.x + offsetX), exp.y - (player.y + offsetY)) < 20) {
             player.exp++;
             expPoints.splice(expIndex, 1);
+            if (player.exp >= player.expToNextLevel) {
+                player.level++;
+                player.exp = 0;
+                player.expToNextLevel = Math.ceil(player.expToNextLevel * 1.5);
+            }
         }
     });
 }
@@ -242,16 +249,22 @@ function drawScore() {
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
-function drawExp() {
+function drawExpBar() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`EXP: ${player.exp}`, 10, 60);
+    ctx.fillText(`Level: ${player.level}`, 10, 60);
+    
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(10, 80, (canvas.width - 20) * (player.exp / player.expToNextLevel), 10);
+
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(10, 80, canvas.width - 20, 10);
 }
 
 function drawHP() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`HP: ${player.hp}`, 10, 90);
+    ctx.fillText(`HP: ${player.hp}`, 10, 100);
 }
 
 function generateTiles() {
@@ -282,7 +295,7 @@ function findClosestEnemy() {
 
 function shootClosestEnemy() {
     const closestEnemy = findClosestEnemy();
-    if (closestEnemy) {
+    if (closestEnemy && player.weapon) {
         const angle = Math.atan2(closestEnemy.y - (player.y + offsetY), closestEnemy.x - (player.x + offsetX));
         weapons[player.weapon].shoot(player.x + offsetX, player.y + offsetY, angle);
     }
@@ -320,7 +333,7 @@ function update() {
     drawExplosions();
     drawExpPoints();
     drawScore();
-    drawExp();
+    drawExpBar();
     drawHP();
 
     updatePlayerPosition();
