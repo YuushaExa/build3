@@ -78,6 +78,7 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
+const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
@@ -112,8 +113,8 @@ function drawBullets() {
 }
 
 function drawExplosions() {
+    ctx.fillStyle = `rgba(255, 165, 0, 0.5)`;
     explosions.forEach(explosion => {
-        ctx.fillStyle = `rgba(255, 165, 0, ${explosion.alpha})`;
         ctx.beginPath();
         ctx.arc(explosion.x - offsetX, explosion.y - offsetY, explosion.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -124,6 +125,18 @@ function drawExpPoints() {
     ctx.fillStyle = 'blue';
     expPoints.forEach(exp => {
         ctx.fillRect(exp.x - offsetX, exp.y - offsetY, exp.size, exp.size);
+    });
+}
+
+function drawDamageTexts() {
+    ctx.fillStyle = 'white';
+    ctx.font = '14px Arial';
+    damageTexts.forEach((damageText, index) => {
+        ctx.fillText(damageText.text, damageText.x - offsetX, damageText.y - offsetY);
+        damageText.lifetime -= 1;
+        if (damageText.lifetime <= 0) {
+            damageTexts.splice(index, 1);
+        }
     });
 }
 
@@ -204,6 +217,12 @@ function checkCollisions() {
         bullets.forEach((bullet, bulletIndex) => {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= bullet.attack;
+                damageTexts.push({
+                    text: `-${bullet.attack}`,
+                    x: enemy.x,
+                    y: enemy.y,
+                    lifetime: 60
+                });
                 if (bullet.penetrate) {
                     bullet.penetrate--;
                     if (bullet.penetrate <= 0) {
@@ -249,7 +268,6 @@ function applyPlayerDamage(amount) {
         player.damageCooldown = false;
     }, 1000); // 1 second cooldown between damage applications
 }
-
 
 function isColliding(rect1, rect2) {
     return rect1.x < rect2.x + rect2.size &&
@@ -347,6 +365,7 @@ function update() {
     drawBullets();
     drawExplosions();
     drawExpPoints();
+    drawDamageTexts();
     drawScore();
     drawExpBar();
     drawHP();
