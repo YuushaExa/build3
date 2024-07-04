@@ -5,8 +5,58 @@ canvas.width = 800;
 canvas.height = 600;
 
 const tileSize = 50;
-const mapWidth = 100;  // Number of tiles horizontally
-const mapHeight = 100; // Number of tiles vertically
+const mapWidth = 100;
+const mapHeight = 100;
+
+const characters = {
+    mecha: {
+        speed: 5,
+        hp: 100,
+        weapon: "Gun"
+    },
+    cyborg: {
+        speed: 5,
+        hp: 100,
+        weapon: "Shotgun"
+    }
+};
+
+const weapons = {
+    Gun: {
+        attack: 10,
+        shoot: function (playerX, playerY, angle) {
+            const speed = 5;
+            bullets.push({
+                x: playerX,
+                y: playerY,
+                size: 5,
+                dx: Math.cos(angle) * speed,
+                dy: Math.sin(angle) * speed,
+                attack: this.attack,
+                penetrate: 0
+            });
+        }
+    },
+    Shotgun: {
+        attack: 15,
+        shoot: function (playerX, playerY, angle) {
+            const spreadAngle = 0.1;
+            for (let i = -1; i <= 1; i += 2) {
+                const bulletAngle = angle + i * spreadAngle;
+                const speed = 5;
+                bullets.push({
+                    x: playerX,
+                    y: playerY,
+                    size: 5,
+                    dx: Math.cos(bulletAngle) * speed,
+                    dy: Math.sin(bulletAngle) * speed,
+                    attack: this.attack,
+                    penetrate: 2
+                });
+            }
+        }
+    }
+};
 
 let player = {
     x: canvas.width / 2,
@@ -23,64 +73,17 @@ let player = {
     damageCooldown: false // Initialize cooldown status
 };
 
+
 const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
-const damageTexts = [];
+const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
 let offsetX = 0;
 let offsetY = 0;
 let gameStarted = false;
-
-const characters = {
-    mecha: { speed: 3, hp: 100, weapon: 'Gun' },
-    cyborg: { speed: 2, hp: 100, weapon: 'Shotgun' }
-};
-
-const weapons = {
-    Gun: {
-        attack: 10,
-        shoot: function (x, y, angle) {
-            const speed = 5;
-            bullets.push({
-                x: x,
-                y: y,
-                size: 5,
-                dx: Math.cos(angle) * speed,
-                dy: Math.sin(angle) * speed,
-                attack: this.attack,
-                penetrate: 0
-            });
-        }
-    },
-    Shotgun: {
-        attack: 15,
-        shoot: function (x, y, angle) {
-            const speed = 5;
-            const spread = Math.PI / 12; // 15 degrees spread
-            bullets.push({
-                x: x,
-                y: y,
-                size: 5,
-                dx: Math.cos(angle - spread) * speed,
-                dy: Math.sin(angle - spread) * speed,
-                attack: this.attack,
-                penetrate: 1
-            });
-            bullets.push({
-                x: x,
-                y: y,
-                size: 5,
-                dx: Math.cos(angle + spread) * speed,
-                dy: Math.sin(angle + spread) * speed,
-                attack: this.attack,
-                penetrate: 1
-            });
-        }
-    }
-};
 
 function drawPlayer() {
     ctx.fillStyle = 'blue';
@@ -124,41 +127,6 @@ function drawExpPoints() {
     });
 }
 
-function drawScore() {
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${score}`, 10, 30);
-}
-
-function drawExpBar() {
-    ctx.fillStyle = 'white';
-    ctx.fillRect(10, 50, 200, 20);
-    ctx.fillStyle = 'blue';
-    ctx.fillRect(10, 50, (player.exp / player.expToNextLevel) * 200, 20);
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.fillText(`Level: ${player.level}`, 220, 65);
-}
-
-function drawHP() {
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.fillText(`HP: ${player.hp}`, 10, 80);
-}
-
-function drawDamageTexts() {
-    ctx.fillStyle = 'white';
-    ctx.font = '14px Arial';
-    damageTexts.forEach((text, index) => {
-        ctx.fillText(text.text, text.x - offsetX, text.y - offsetY);
-        text.y -= 1; // Move the text up
-        text.alpha -= 0.02; // Fade out the text
-        if (text.alpha <= 0) {
-            damageTexts.splice(index, 1);
-        }
-    });
-}
-
 function updatePlayerPosition() {
     player.x += player.dx;
     player.y += player.dy;
@@ -177,11 +145,10 @@ function moveEnemies() {
         if (!enemy.vanishing) {
             const angle = Math.atan2(player.y + offsetY - enemy.y, player.x + offsetX - enemy.x);
             const speed = Math.min(enemyMaxSpeed, enemy.speed + score * 0.01);
-            
+
             enemy.x += Math.cos(angle) * speed;
             enemy.y += Math.sin(angle) * speed;
 
-            // Avoid overlapping with other enemies
             enemies.forEach(otherEnemy => {
                 if (enemy !== otherEnemy && isColliding(enemy, otherEnemy)) {
                     const angleBetween = Math.atan2(otherEnemy.y - enemy.y, otherEnemy.x - enemy.x);
@@ -198,7 +165,6 @@ function moveBullets() {
         bullet.x += bullet.dx;
         bullet.y += bullet.dy;
 
-        // Remove bullets that go off-screen
         if (
             bullet.x < offsetX || bullet.x > offsetX + canvas.width ||
             bullet.y < offsetY || bullet.y > offsetY + canvas.height
@@ -219,28 +185,8 @@ function updateExplosions() {
 
 function spawnEnemy() {
     const size = 20;
-    let x, y;
-    const edge = Math.floor(Math.random() * 4);
-
-    switch (edge) {
-        case 0: // Top edge
-            x = Math.random() * canvas.width + offsetX;
-            y = offsetY - size;
-            break;
-        case 1: // Right edge
-            x = offsetX + canvas.width;
-            y = Math.random() * canvas.height + offsetY;
-            break;
-        case 2: // Bottom edge
-            x = Math.random() * canvas.width + offsetX;
-            y = offsetY + canvas.height;
-            break;
-        case 3: // Left edge
-            x = offsetX - size;
-            y = Math.random() * canvas.height + offsetY;
-            break;
-    }
-
+    const x = Math.random() * (canvas.width + offsetX - size);
+    const y = Math.random() * (canvas.height + offsetY - size);
     enemies.push({
         x,
         y,
@@ -258,8 +204,6 @@ function checkCollisions() {
         bullets.forEach((bullet, bulletIndex) => {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= bullet.attack;
-                damageTexts.push({ text: `-${bullet.attack}`, x: enemy.x, y: enemy.y, alpha: 1 });
-
                 if (bullet.penetrate) {
                     bullet.penetrate--;
                     if (bullet.penetrate <= 0) {
@@ -306,6 +250,7 @@ function applyPlayerDamage(amount) {
     }, 1000); // 1 second cooldown between damage applications
 }
 
+
 function isColliding(rect1, rect2) {
     return rect1.x < rect2.x + rect2.size &&
            rect1.x + rect1.size > rect2.x &&
@@ -313,42 +258,137 @@ function isColliding(rect1, rect2) {
            rect1.y + rect1.size > rect2.y;
 }
 
+function drawScore() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Score: ${score}`, 10, 30);
+}
+
+function drawExpBar() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Level: ${player.level}`, 10, 60);
+    
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(10, 80, (canvas.width - 20) * (player.exp / player.expToNextLevel), 10);
+
+    ctx.strokeStyle = 'white';
+    ctx.strokeRect(10, 80, canvas.width - 20, 10);
+}
+
+function drawHP() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`HP: ${player.hp}`, 10, 100);
+}
+
+function generateTiles() {
+    for (let y = -1; y <= canvas.height / tileSize + 1; y++) {
+        for (let x = -1; x <= canvas.width / tileSize + 1; x++) {
+            const tileX = (x * tileSize - offsetX % tileSize) % (tileSize * mapWidth);
+            const tileY = (y * tileSize - offsetY % tileSize) % (tileSize * mapHeight);
+            ctx.fillStyle = ((x + y) % 2 === 0) ? '#555' : '#333';
+            ctx.fillRect(tileX, tileY, tileSize, tileSize);
+        }
+    }
+}
+
+function findClosestEnemy() {
+    let closestEnemy = null;
+    let closestDistance = Infinity;
+
+    enemies.forEach(enemy => {
+        const distance = Math.hypot(enemy.x - (player.x + offsetX), enemy.y - (player.y + offsetY));
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestEnemy = enemy;
+        }
+    });
+
+    return closestEnemy;
+}
+
+function shootClosestEnemy() {
+    const closestEnemy = findClosestEnemy();
+    if (closestEnemy && player.weapon) {
+        const angle = Math.atan2(closestEnemy.y - (player.y + offsetY), closestEnemy.x - (player.x + offsetX));
+        weapons[player.weapon].shoot(player.x + offsetX, player.y + offsetY, angle);
+    }
+}
+
+function createExplosion(x, y) {
+    explosions.push({
+        x: x,
+        y: y,
+        radius: 20,
+        alpha: 1
+    });
+}
+
 function startVanishing(enemy) {
     enemy.vanishing = true;
-    enemy.alpha = 1;
-    const fadeOut = setInterval(() => {
+    const vanishInterval = setInterval(() => {
         enemy.alpha -= 0.05;
         if (enemy.alpha <= 0) {
-            clearInterval(fadeOut);
-            const index = enemies.indexOf(enemy);
-            if (index !== -1) enemies.splice(index, 1);
+            clearInterval(vanishInterval);
+            enemies.splice(enemies.indexOf(enemy), 1);
         }
-    }, 100);
+    }, 50);
 }
 
-function gameLoop() {
-    if (gameStarted) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+function update() {
+    if (!gameStarted) return;
 
-        updatePlayerPosition();
-        moveEnemies();
-        moveBullets();
-        updateExplosions();
-        checkCollisions();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        drawPlayer();
-        drawEnemies();
-        drawBullets();
-        drawExplosions();
-        drawExpPoints();
-        drawScore();
-        drawExpBar();
-        drawHP();
-        drawDamageTexts();
+    generateTiles();
+    drawPlayer();
+    drawEnemies();
+    drawBullets();
+    drawExplosions();
+    drawExpPoints();
+    drawScore();
+    drawExpBar();
+    drawHP();
+
+    updatePlayerPosition();
+    moveEnemies();
+    moveBullets();
+    updateExplosions();
+    checkCollisions();
+
+    requestAnimationFrame(update);
+}
+
+function keyDown(e) {
+    if (e.key === 'ArrowRight' || e.key === 'd') {
+        player.dx = player.speed;
+    } else if (e.key === 'ArrowLeft' || e.key === 'a') {
+        player.dx = -player.speed;
+    } else if (e.key === 'ArrowUp' || e.key === 'w') {
+        player.dy = -player.speed;
+    } else if (e.key === 'ArrowDown' || e.key === 's') {
+        player.dy = player.speed;
     }
-
-    requestAnimationFrame(gameLoop);
 }
+
+function keyUp(e) {
+    if (
+        e.key === 'ArrowRight' || e.key === 'd' ||
+        e.key === 'ArrowLeft' || e.key === 'a' ||
+        e.key === 'ArrowUp' || e.key === 'w' ||
+        e.key === 'ArrowDown' || e.key === 's'
+    ) {
+        player.dx = 0;
+        player.dy = 0;
+    }
+}
+
+document.addEventListener('keydown', keyDown);
+document.addEventListener('keyup', keyUp);
+
+setInterval(shootClosestEnemy, 1000);
+setInterval(spawnEnemy, 2000);
 
 document.getElementById('startButton').addEventListener('click', () => {
     const selectedCharacter = document.getElementById('characterSelect').value;
@@ -363,26 +403,3 @@ document.getElementById('startButton').addEventListener('click', () => {
     canvas.style.display = 'block';
     update();
 });
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'w') player.dy = -player.speed;
-    if (e.key === 'ArrowDown' || e.key === 's') player.dy = player.speed;
-    if (e.key === 'ArrowLeft' || e.key === 'a') player.dx = -player.speed;
-    if (e.key === 'ArrowRight' || e.key === 'd') player.dx = player.speed;
-});
-
-document.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'w') player.dy = 0;
-    if (e.key === 'ArrowDown' || e.key === 's') player.dy = 0;
-    if (e.key === 'ArrowLeft' || e.key === 'a') player.dx = 0;
-    if (e.key === 'ArrowRight' || e.key === 'd') player.dx = 0;
-});
-
-canvas.addEventListener('click', (e) => {
-    if (player.weapon) {
-        const angle = Math.atan2(e.clientY - player.y, e.clientX - player.x);
-        player.weapon.shoot(player.x + player.size / 2, player.y + player.size / 2, angle);
-    }
-});
-
-gameLoop();
