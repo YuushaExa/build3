@@ -15,7 +15,7 @@ let player = {
     speed: 0,
     dx: 0,
     dy: 0,
-    hp: 100,
+    hp: 0,
     weapon: null,
     exp: 0,
     level: 1,
@@ -35,8 +35,8 @@ let offsetY = 0;
 let gameStarted = false;
 
 const characters = {
-    mecha: { speed: 5, hp: 100, weapon: 'Gun' },
-    cyborg: { speed: 5, hp: 100, weapon: 'Shotgun' }
+    mecha: { speed: 3, hp: 100, weapon: 'Gun' },
+    cyborg: { speed: 2, hp: 100, weapon: 'Shotgun' }
 };
 
 const weapons = {
@@ -350,12 +350,18 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-document.getElementById('startGame').addEventListener('click', () => {
+document.getElementById('startButton').addEventListener('click', () => {
+    const selectedCharacter = document.getElementById('characterSelect').value;
+    const characterData = characters[selectedCharacter];
+
+    player.speed = characterData.speed;
+    player.hp = characterData.hp;
+    player.weapon = characterData.weapon;
+
     gameStarted = true;
-    player.hp = characters.mech.hp;
-    player.weapon = weapons[characters.mech.weapon];
-    spawnEnemy();
-    setInterval(spawnEnemy, 2000); // Spawn an enemy every 2 seconds
+    document.getElementById('menu').style.display = 'none';
+    canvas.style.display = 'block';
+    update();
 });
 
 document.addEventListener('keydown', (e) => {
