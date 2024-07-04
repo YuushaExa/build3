@@ -356,11 +356,22 @@ function findClosestEnemy() {
 
 function shootClosestEnemy() {
     const closestEnemy = findClosestEnemy();
+
     if (closestEnemy && player.weapon) {
-        const angle = Math.atan2(closestEnemy.y - (player.y + offsetY), closestEnemy.x - (player.x + offsetX));
-        weapons[player.weapon].shoot(player.x + offsetX, player.y + offsetY, angle);
+        // Calculate enemy position relative to the visible canvas area
+        const enemyXInView = closestEnemy.x - offsetX;
+        const enemyYInView = closestEnemy.y - offsetY;
+
+        // Check if the enemy is within the visible canvas bounds
+        if (enemyXInView >= 0 && enemyXInView <= canvas.width &&
+            enemyYInView >= 0 && enemyYInView <= canvas.height) {
+            // If within bounds, calculate shooting angle and shoot
+            const angle = Math.atan2(enemyYInView - player.y, enemyXInView - player.x);
+            weapons[player.weapon].shoot(player.x + offsetX, player.y + offsetY, angle);
+        }
     }
 }
+
 
 function createExplosion(x, y) {
     explosions.push({
