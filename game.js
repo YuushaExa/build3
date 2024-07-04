@@ -464,4 +464,4 @@ document.getElementById('startButton').addEventListener('click', () => {
     update();
 });
 
-    });
+    };
