@@ -25,7 +25,7 @@ const weapons = {
     Gun: {
         attack: 10,
         shoot: function (playerX, playerY, angle) {
-            const speed = 5;
+            const speed = 15;
             bullets.push({
                 x: playerX,
                 y: playerY,
