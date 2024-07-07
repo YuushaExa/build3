@@ -345,7 +345,7 @@ function drawScore() {
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
-    function drawGoldPoints() {
+    function drawGoldPointsUI() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.fillText(`Gold: ${gold}`, 10, 100);
@@ -445,7 +445,7 @@ function update() {
     drawBullets();
     drawExplosions();
     drawExpPoints();
-    drawGoldPoints();
+drawGoldPointsUI();
     drawDamageTexts();
     drawScore();
     drawExpBar();
