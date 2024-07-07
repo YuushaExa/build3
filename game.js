@@ -80,11 +80,9 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
-const goldPoints = [];
 const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
-let gold = 0;
 let score = 0;
 let offsetX = 0;
 let offsetY = 0;
@@ -132,13 +130,6 @@ function drawExpPoints() {
     });
 }
 
- function drawGoldPoints() {
-        ctx.fillStyle = 'yellow';
-        goldPoints.forEach(gold => {
-            ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
-        });
-    }
-    
 function drawDamageTexts() {
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';
@@ -274,9 +265,7 @@ function checkCollisions() {
                 if (enemy.hp <= 0 && !enemy.vanishing) {
                     startVanishing(enemy);
                     score++;
-           const itemPositions = getNonOverlappingPositions(enemy.x, enemy.y, 2, 20);
-                        expPoints.push({ x: itemPositions[0].x, y: itemPositions[0].y, size: 5 });
-                        goldPoints.push({ x: itemPositions[1].x, y: itemPositions[1].y, size: 5 });
+                    expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
                 }
             }
         });
@@ -299,30 +288,8 @@ function checkCollisions() {
             }
         }
     });
-
-
-goldPoints.forEach((goldPoint, index) => {
-            if (isColliding(player, goldPoint)) {
-                gold += 1;
-            }
-        });
-
 }
 
-      function getNonOverlappingPositions(centerX, centerY, itemCount, minDistance) {
-        const positions = [];
-        const angleStep = (2 * Math.PI) / itemCount;
-
-        for (let i = 0; i < itemCount; i++) {
-            const angle = i * angleStep;
-            const x = centerX + Math.cos(angle) * minDistance;
-            const y = centerY + Math.sin(angle) * minDistance;
-            positions.push({ x, y });
-        }
-
-        return positions;
-    }
-    
 function applyPlayerDamage(amount) {
     if (player.damageCooldown) return; // Prevent multiple damage applications in quick succession
     player.hp -= amount;
@@ -345,12 +312,6 @@ function drawScore() {
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
-    function drawGoldPointsUI() {
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Gold: ${gold}`, 10, 100);
-}
-    
 function drawExpBar() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
@@ -366,7 +327,7 @@ function drawExpBar() {
 function drawHP() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`HP: ${player.hp}`, 10, 130);
+    ctx.fillText(`HP: ${player.hp}`, 10, 100);
 }
 
 function generateTiles() {
@@ -445,7 +406,6 @@ function update() {
     drawBullets();
     drawExplosions();
     drawExpPoints();
-drawGoldPointsUI();
     drawDamageTexts();
     drawScore();
     drawExpBar();
