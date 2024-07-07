@@ -81,7 +81,7 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
-const goldPoints = [];
+const gold = [];
 const damageTexts = [];
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
@@ -131,9 +131,9 @@ function drawExpPoints() {
         ctx.fillRect(exp.x - offsetX, exp.y - offsetY, exp.size, exp.size);
     });
 }
-function drawGoldPoints() {
+function drawgold() {
     ctx.fillStyle = 'yellow';
-    goldPoints.forEach(gold => {
+    gold.forEach(gold => {
         ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
     });
 }
@@ -273,7 +273,7 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
-                    goldPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
+                    gold.push({ x: enemy.x, y: enemy.y, size: 5 });
                 }
             }
         });
@@ -297,7 +297,7 @@ function checkCollisions() {
         }
     });
 
-        goldPoints.forEach((gold, goldindex) => {
+        gold.forEach((gold, goldindex) => {
         if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
             player.gold++;
         }
@@ -325,10 +325,10 @@ function drawScore() {
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
-    function drawGoldPoints() {
+    function drawgold() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Gold: ${goldPoints}`, 10, 30);
+    ctx.fillText(`Gold: ${gold}`, 10, 130);
 }
 
 function drawExpBar() {
@@ -425,9 +425,9 @@ function update() {
     drawBullets();
     drawExplosions();
     drawExpPoints();
-    drawGoldPoints();
     drawDamageTexts();
     drawScore();
+    drawgold();
     drawExpBar();
     drawHP();
 
