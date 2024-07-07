@@ -81,7 +81,7 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
-const gold = [];
+const goldPoints = [];
 const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
@@ -273,6 +273,7 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
+                    goldPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
                 }
             }
         });
@@ -323,6 +324,11 @@ function drawScore() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
+}
+    function drawGoldPoints() {
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Score: ${gold}`, 10, 30);
 }
 
 function drawExpBar() {
@@ -419,6 +425,7 @@ function update() {
     drawBullets();
     drawExplosions();
     drawExpPoints();
+    drawGoldPoints();
     drawDamageTexts();
     drawScore();
     drawExpBar();
