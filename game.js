@@ -328,7 +328,7 @@ function drawScore() {
     function drawGoldPoints() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${gold}`, 10, 30);
+    ctx.fillText(`Score: ${goldPoints}`, 10, 30);
 }
 
 function drawExpBar() {
