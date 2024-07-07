@@ -297,10 +297,9 @@ function checkCollisions() {
         }
     });
 
-     gold.forEach((gold, goldIndex) => { 
+        gold.forEach((gold) => {
         if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
             player.gold++;
-            gold.splice(goldIndex, 1);
         }
     });
 }
@@ -329,7 +328,7 @@ function drawScore() {
     function drawgold() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(Gold: ${player.gold}, 10, 130);
+    ctx.fillText(Gold: ${gold}, 10, 130);
 }
 
 function drawExpBar() {
