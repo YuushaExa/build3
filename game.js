@@ -80,6 +80,7 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
+const goldPoints = [];
 const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
@@ -130,6 +131,13 @@ function drawExpPoints() {
     });
 }
 
+    function drawGoldPoints() {
+        ctx.fillStyle = 'yellow';
+        goldPoints.forEach(gold => {
+            ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
+        });
+    }
+    
 function drawDamageTexts() {
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';
@@ -266,6 +274,7 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
+                    goldPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
                 }
             }
         });
@@ -288,8 +297,15 @@ function checkCollisions() {
             }
         }
     });
-}
 
+
+     goldPoints.forEach((gold, goldIndex) => {
+            if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
+                goldPoints.splice(goldIndex, 1);
+                player.gold++
+            }
+        });
+}
 function applyPlayerDamage(amount) {
     if (player.damageCooldown) return; // Prevent multiple damage applications in quick succession
     player.hp -= amount;
@@ -406,6 +422,7 @@ function update() {
     drawBullets();
     drawExplosions();
     drawExpPoints();
+    drawGoldPoints();
     drawDamageTexts();
     drawScore();
     drawExpBar();
