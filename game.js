@@ -273,15 +273,15 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
-                    gold.push({ x: enemy.x, y: enemy.y, size: 15 });
+                    gold.push({ x: enemy.x, y: enemy.y, size: 15 }); // Adding gold to the array
                 }
             }
         });
 
         // Check collision between player and enemies
-      if (isColliding(player, enemy)) {
-    applyPlayerDamage(10); // Apply damage to the player immediately
-}
+        if (isColliding(player, enemy)) {
+            applyPlayerDamage(10); // Apply damage to the player immediately
+        }
     });
 
     // Check collision between player and EXP points
@@ -297,9 +297,11 @@ function checkCollisions() {
         }
     });
 
-        gold.forEach((gold) => {
-        if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
+    // Check collision between player and gold
+    gold.forEach((goldItem, goldIndex) => { // Use goldItem instead of gold to avoid naming conflict
+        if (Math.hypot(goldItem.x - (player.x + offsetX), goldItem.y - (player.y + offsetY)) < 20) {
             player.gold++;
+            gold.splice(goldIndex, 1); // Remove collected gold
         }
     });
 }
@@ -325,10 +327,17 @@ function drawScore() {
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
-    function drawgold() {
+ function drawgold() { 
+    ctx.fillStyle = 'yellow';
+    gold.forEach(goldItem => { 
+        ctx.fillRect(goldItem.x - offsetX, goldItem.y - offsetY, goldItem.size, goldItem.size);
+    });
+}
+
+function drawGoldCount() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Gold: ${gold}`, 10, 130);
+    ctx.fillText(`Gold: ${player.gold}`, 10, 130); // Display player's gold count
 }
 
 function drawExpBar() {
@@ -419,7 +428,7 @@ function update() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    generateTiles();
+   generateTiles();
     drawPlayer();
     drawEnemies();
     drawBullets();
@@ -427,7 +436,8 @@ function update() {
     drawExpPoints();
     drawDamageTexts();
     drawScore();
-    drawgold();
+    drawGoldItems();
+    drawGoldCount();
     drawExpBar();
     drawHP();
 
