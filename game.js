@@ -98,7 +98,7 @@ function drawPlayer() {
 function drawEnemies() {
     enemies.forEach(enemy => {
         if (enemy.vanishing) {
-            ctx.fillStyle = `rgba(255, 0, 0, ${enemy.alpha})`;
+            ctx.fillStyle = rgba(255, 0, 0, ${enemy.alpha});
             ctx.beginPath();
             ctx.arc(enemy.x - offsetX, enemy.y - offsetY, enemy.size / 2 * enemy.alpha, 0, Math.PI * 2);
             ctx.fill();
@@ -117,7 +117,7 @@ function drawBullets() {
 }
 
 function drawExplosions() {
-    ctx.fillStyle = `rgba(255, 165, 0, 0.5)`;
+    ctx.fillStyle = rgba(255, 165, 0, 0.5);
     explosions.forEach(explosion => {
         ctx.beginPath();
         ctx.arc(explosion.x - offsetX, explosion.y - offsetY, explosion.radius, 0, Math.PI * 2);
@@ -256,7 +256,7 @@ function checkCollisions() {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= bullet.attack;
                 damageTexts.push({
-                    text: `-${bullet.attack}`,
+                    text: -${bullet.attack},
                     x: enemy.x,
                     y: enemy.y,
                     lifetime: 60
@@ -273,15 +273,15 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
-                    gold.push({ x: enemy.x, y: enemy.y, size: 15 }); // Adding gold to the array
+                    gold.push({ x: enemy.x, y: enemy.y, size: 15 });
                 }
             }
         });
 
         // Check collision between player and enemies
-        if (isColliding(player, enemy)) {
-            applyPlayerDamage(10); // Apply damage to the player immediately
-        }
+      if (isColliding(player, enemy)) {
+    applyPlayerDamage(10); // Apply damage to the player immediately
+}
     });
 
     // Check collision between player and EXP points
@@ -297,11 +297,9 @@ function checkCollisions() {
         }
     });
 
-    // Check collision between player and gold
-    gold.forEach((goldItem, goldIndex) => { // Use goldItem instead of gold to avoid naming conflict
-        if (Math.hypot(goldItem.x - (player.x + offsetX), goldItem.y - (player.y + offsetY)) < 20) {
+        gold.forEach((gold) => {
+        if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
             player.gold++;
-            gold.splice(goldIndex, 1); // Remove collected gold
         }
     });
 }
@@ -325,25 +323,18 @@ function isColliding(rect1, rect2) {
 function drawScore() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${score}`, 10, 30);
+    ctx.fillText(Score: ${score}, 10, 30);
 }
- function drawgold() { 
-    ctx.fillStyle = 'yellow';
-    gold.forEach(goldItem => { 
-        ctx.fillRect(goldItem.x - offsetX, goldItem.y - offsetY, goldItem.size, goldItem.size);
-    });
-}
-
-function drawGoldCount() {
+    function drawgold() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Gold: ${player.gold}`, 10, 130); // Display player's gold count
+    ctx.fillText(Gold: ${gold}, 10, 130);
 }
 
 function drawExpBar() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Level: ${player.level}`, 10, 60);
+    ctx.fillText(Level: ${player.level}, 10, 60);
     
     ctx.fillStyle = 'blue';
     ctx.fillRect(10, 80, (canvas.width - 20) * (player.exp / player.expToNextLevel), 10);
@@ -355,7 +346,7 @@ function drawExpBar() {
 function drawHP() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`HP: ${player.hp}`, 10, 100);
+    ctx.fillText(HP: ${player.hp}, 10, 100);
 }
 
 function generateTiles() {
@@ -428,7 +419,7 @@ function update() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-   generateTiles();
+    generateTiles();
     drawPlayer();
     drawEnemies();
     drawBullets();
@@ -436,8 +427,7 @@ function update() {
     drawExpPoints();
     drawDamageTexts();
     drawScore();
-    drawGoldItems();
-    drawGoldCount();
+    drawgold();
     drawExpBar();
     drawHP();
 
