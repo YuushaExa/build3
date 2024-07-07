@@ -132,7 +132,7 @@ function drawExpPoints() {
     });
 }
 
-    function drawGoldPoints() {
+ function drawGoldPoints() {
         ctx.fillStyle = 'yellow';
         goldPoints.forEach(gold => {
             ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
@@ -301,12 +301,13 @@ function checkCollisions() {
     });
 
 
-     goldPoints.forEach((gold, goldIndex) => {
-            if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
-                goldPoints.splice(goldIndex, 1);
-                player.gold++
+goldPoints.forEach((goldPoint, index) => {
+            if (isColliding(player, goldPoint)) {
+                gold += 1;
+                goldPoints.splice(index, 1);
             }
         });
+
 }
 
       function getNonOverlappingPositions(centerX, centerY, itemCount, minDistance) {
