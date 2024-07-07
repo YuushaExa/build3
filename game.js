@@ -329,7 +329,7 @@ function drawScore() {
     function drawgold() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(Gold: ${gold}, 10, 130);
+    ctx.fillText(Gold: ${player.gold}, 10, 130);
 }
 
 function drawExpBar() {
