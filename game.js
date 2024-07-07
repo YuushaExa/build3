@@ -297,9 +297,10 @@ function checkCollisions() {
         }
     });
 
-        gold.forEach((gold) => {
+     gold.forEach((gold, goldIndex) => { 
         if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
             player.gold++;
+            gold.splice(goldIndex, 1);
         }
     });
 }
