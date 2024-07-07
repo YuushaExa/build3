@@ -86,6 +86,7 @@ const damageTexts = [];
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
+let gold = 0;
 let offsetX = 0;
 let offsetY = 0;
 let gameStarted = false;
@@ -273,7 +274,7 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
-                    gold.push({ x: enemy.x, y: enemy.y, size: 5 });
+                    gold.push({ x: enemy.x, y: enemy.y, size: 15 });
                 }
             }
         });
@@ -297,7 +298,7 @@ function checkCollisions() {
         }
     });
 
-        gold.forEach((gold, goldindex) => {
+        gold.forEach((gold) => {
         if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
             player.gold++;
         }
