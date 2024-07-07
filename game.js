@@ -70,6 +70,7 @@ let player = {
     hp: 0,
     weapon: null,
     exp: 0,
+    gold: 0,
     level: 1,
     expToNextLevel: 10,
     damageCooldown: false // Initialize cooldown status
@@ -80,6 +81,7 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
+const gold = [];
 const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
@@ -129,7 +131,12 @@ function drawExpPoints() {
         ctx.fillRect(exp.x - offsetX, exp.y - offsetY, exp.size, exp.size);
     });
 }
-
+function drawGoldPoints() {
+    ctx.fillStyle = 'yellow';
+    goldPoints.forEach(gold => {
+        ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
+    });
+}
 function drawDamageTexts() {
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';
@@ -286,6 +293,12 @@ function checkCollisions() {
                 player.exp = 0;
                 player.expToNextLevel = Math.ceil(player.expToNextLevel * 1.5);
             }
+        }
+    });
+
+        goldPoints.forEach((gold) => {
+        if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
+            player.gold++;
         }
     });
 }
