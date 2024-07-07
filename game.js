@@ -84,6 +84,7 @@ const goldPoints = [];
 const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
+let gold = 0;
 let score = 0;
 let offsetX = 0;
 let offsetY = 0;
