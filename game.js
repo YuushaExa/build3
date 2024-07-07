@@ -70,7 +70,6 @@ let player = {
     hp: 0,
     weapon: null,
     exp: 0,
-    gold: 0,
     level: 1,
     expToNextLevel: 10,
     damageCooldown: false // Initialize cooldown status
@@ -81,8 +80,7 @@ const enemies = [];
 const bullets = [];
 const explosions = [];
 const expPoints = [];
-const gold = [];
-const damageTexts = [];
+const damageTexts = []; // Add a list to store damage texts
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
@@ -98,7 +96,7 @@ function drawPlayer() {
 function drawEnemies() {
     enemies.forEach(enemy => {
         if (enemy.vanishing) {
-            ctx.fillStyle = rgba(255, 0, 0, ${enemy.alpha});
+            ctx.fillStyle = `rgba(255, 0, 0, ${enemy.alpha})`;
             ctx.beginPath();
             ctx.arc(enemy.x - offsetX, enemy.y - offsetY, enemy.size / 2 * enemy.alpha, 0, Math.PI * 2);
             ctx.fill();
@@ -117,7 +115,7 @@ function drawBullets() {
 }
 
 function drawExplosions() {
-    ctx.fillStyle = rgba(255, 165, 0, 0.5);
+    ctx.fillStyle = `rgba(255, 165, 0, 0.5)`;
     explosions.forEach(explosion => {
         ctx.beginPath();
         ctx.arc(explosion.x - offsetX, explosion.y - offsetY, explosion.radius, 0, Math.PI * 2);
@@ -131,12 +129,7 @@ function drawExpPoints() {
         ctx.fillRect(exp.x - offsetX, exp.y - offsetY, exp.size, exp.size);
     });
 }
-function drawgold() {
-    ctx.fillStyle = 'yellow';
-    gold.forEach(gold => {
-        ctx.fillRect(gold.x - offsetX, gold.y - offsetY, gold.size, gold.size);
-    });
-}
+
 function drawDamageTexts() {
     ctx.fillStyle = 'white';
     ctx.font = '14px Arial';
@@ -207,15 +200,15 @@ function updateExplosions() {
 
 function spawnEnemy() {
     const size = 20;
-    
+
     // Determine spawn area outside the canvas edges
     const spawnArea = Math.max(canvas.width, canvas.height) * 1.5; // Adjust multiplier as needed
-    
+
     // Randomly choose a side to spawn the enemy
     const side = Math.floor(Math.random() * 4); // 0 = top, 1 = right, 2 = bottom, 3 = left
-    
+
     let x, y;
-    
+
     // Calculate initial position based on chosen side
     switch (side) {
         case 0: // Top
@@ -237,7 +230,7 @@ function spawnEnemy() {
         default:
             break;
     }
-    
+
     enemies.push({
         x,
         y,
@@ -256,7 +249,7 @@ function checkCollisions() {
             if (isColliding(bullet, enemy)) {
                 enemy.hp -= bullet.attack;
                 damageTexts.push({
-                    text: -${bullet.attack},
+                    text: `-${bullet.attack}`,
                     x: enemy.x,
                     y: enemy.y,
                     lifetime: 60
@@ -273,7 +266,6 @@ function checkCollisions() {
                     startVanishing(enemy);
                     score++;
                     expPoints.push({ x: enemy.x, y: enemy.y, size: 5 });
-                    gold.push({ x: enemy.x, y: enemy.y, size: 15 });
                 }
             }
         });
@@ -294,12 +286,6 @@ function checkCollisions() {
                 player.exp = 0;
                 player.expToNextLevel = Math.ceil(player.expToNextLevel * 1.5);
             }
-        }
-    });
-
-        gold.forEach((gold) => {
-        if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
-            player.gold++;
         }
     });
 }
@@ -323,19 +309,14 @@ function isColliding(rect1, rect2) {
 function drawScore() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(Score: ${score}, 10, 30);
-}
-    function drawgold() {
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.fillText(Gold: ${gold}, 10, 130);
+    ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
 function drawExpBar() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(Level: ${player.level}, 10, 60);
-    
+    ctx.fillText(`Level: ${player.level}`, 10, 60);
+
     ctx.fillStyle = 'blue';
     ctx.fillRect(10, 80, (canvas.width - 20) * (player.exp / player.expToNextLevel), 10);
 
@@ -346,7 +327,7 @@ function drawExpBar() {
 function drawHP() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(HP: ${player.hp}, 10, 100);
+    ctx.fillText(`HP: ${player.hp}`, 10, 100);
 }
 
 function generateTiles() {
@@ -427,7 +408,6 @@ function update() {
     drawExpPoints();
     drawDamageTexts();
     drawScore();
-    drawgold();
     drawExpBar();
     drawHP();
 
