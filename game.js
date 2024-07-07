@@ -86,7 +86,6 @@ const damageTexts = [];
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
-let gold = 0;
 let offsetX = 0;
 let offsetY = 0;
 let gameStarted = false;
