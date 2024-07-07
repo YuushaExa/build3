@@ -82,7 +82,7 @@ const bullets = [];
 const explosions = [];
 const expPoints = [];
 const goldPoints = [];
-const damageTexts = []; // Add a list to store damage texts
+const damageTexts = [];
 const enemySpeed = 1.5;
 const enemyMaxSpeed = 2.5;
 let score = 0;
@@ -297,7 +297,7 @@ function checkCollisions() {
         }
     });
 
-        goldPoints.forEach((gold) => {
+        goldPoints.forEach((gold, goldindex) => {
         if (Math.hypot(gold.x - (player.x + offsetX), gold.y - (player.y + offsetY)) < 20) {
             player.gold++;
         }
@@ -328,7 +328,7 @@ function drawScore() {
     function drawGoldPoints() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${goldPoints}`, 10, 30);
+    ctx.fillText(`Gold: ${goldPoints}`, 10, 30);
 }
 
 function drawExpBar() {
